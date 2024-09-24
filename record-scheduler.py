@@ -1,11 +1,7 @@
 import os
 import json
 import ffmpeg
-from datetime import datetime
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.cron import CronTrigger
 from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
 import logging
 
 # Static definitions
