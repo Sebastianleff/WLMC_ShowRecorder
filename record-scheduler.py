@@ -9,13 +9,13 @@ from watchdog.events import FileSystemEventHandler
 import logging
 
 # Static definitions
-STREAM_URL = 'http://localhost:8000/stream'
-STATION_NAME = 'WLMC Landmark College Radio'
-SAVE_PATH = '/path/to/local/recordings/'
+# STREAM_URL = 'http://localhost:8880/stream'
+STREAM_URL = 'https://wlmc.landmark.edu:8880/stream'
+SAVE_PATH = ''
 
 # Function to generate filenames based on host's name
 def generate_filename(host_first_name, host_last_name, timestamp):
-    filename = f"{STATION_NAME}_{host_first_name}_{host_last_name}_{timestamp.strftime('%m_%d_%Y')}_RAWDATA.mp3"
+    filename = f"{host_first_name}_{host_last_name}_{timestamp.strftime('%m_%d_%Y')}_RAWDATA.mp3"
     full_path = os.path.join(SAVE_PATH, filename)
     return full_path
 
