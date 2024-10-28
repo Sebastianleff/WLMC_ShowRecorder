@@ -4,6 +4,6 @@
 __pycache__/
 *.pyc
 migrations/
-recording/
+recordings/
 uploads/
 app.db

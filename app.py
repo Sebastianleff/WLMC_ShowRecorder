@@ -13,9 +13,8 @@ db.init_app(app)
 migrate = Migrate(app, db)
 
 def extract_time(time_str):
-    # Match the `HH:MM` format and ignore any trailing seconds
     match = re.match(r"(\d{2}:\d{2})", time_str)
-    return match.group(1) if match else time_str  # Return matched HH:MM or original if no match
+    return match.group(1) if match else time_str
 
 @app.route('/')
 def index():
