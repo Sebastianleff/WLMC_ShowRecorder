@@ -3,7 +3,6 @@
 .vscode/
 __pycache__/
 *.pyc
-migrations/
 recordings/
 uploads/
 app.db
