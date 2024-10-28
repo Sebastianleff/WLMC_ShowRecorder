@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Show Schedule</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="container mt-5">
+    <h2>Show Schedule</h2>
+
+    <!-- Show List Table -->
+    <table class="table table-bordered mt-4">
+        <thead>
+            <tr>
+                <th>Host First Name</th>
+                <th>Host Last Name</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+                <th>Days of Week</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for show in shows.items %}
+            <tr>
+                <td>{{ show.host_first_name }}</td>
+                <td>{{ show.host_last_name }}</td>
+                <td>{{ show.start_date }}</td>
+                <td>{{ show.end_date }}</td>
+                <td>{{ show.start_time }}</td>
+                <td>{{ show.end_time }}</td>
+                <td>{{ show.days_of_week }}</td>
+                <td>
+                    <a href="{{ url_for('edit_show', id=show.id) }}" class="btn btn-warning btn-sm">Edit</a>
+                    <form action="{{ url_for('delete_show', id=show.id) }}" method="post" style="display:inline;">
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Pagination Links -->
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            {% for page_num in range(1, shows.pages + 1) %}
+                <li class="page-item {% if page_num == shows.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('index', page=page_num) }}">{{ page_num }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </nav>
+
+    <!-- Buttons for actions -->
+    <form action="{{ url_for('update_schedule') }}" method="post">
+        <button type="submit" class="btn btn-primary">Update Schedule</button>
+    </form>
+
+    <a href="{{ url_for('add_show') }}" class="btn btn-success mt-3">Add New Show</a>
+
+    <form action="{{ url_for('clear_all') }}" method="post" class="mt-3">
+        <button type="submit" class="btn btn-danger">Clear All Shows</button>
+    </form>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.6.0/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
