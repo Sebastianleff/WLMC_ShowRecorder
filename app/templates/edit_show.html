@@ -10,34 +10,34 @@
 
 <div class="container mt-5">
     <h2>Edit Show</h2>
-    <form method="post" onsubmit="updateInputs()">
+    <form method="post">
         <div class="form-group">
-            <label>Host First Name:</label>
-            <input type="text" name="host_first_name" class="form-control" value="{{ show.host_first_name }}" required>
+            <label for="host_first_name">Host First Name:</label>
+            <input type="text" name="host_first_name" id="host_first_name" class="form-control" value="{{ show.host_first_name }}" required>
         </div>
         <div class="form-group">
-            <label>Host Last Name:</label>
-            <input type="text" name="host_last_name" class="form-control" value="{{ show.host_last_name }}" required>
+            <label for="host_last_name">Host Last Name:</label>
+            <input type="text" name="host_last_name" id="host_last_name" class="form-control" value="{{ show.host_last_name }}" required>
         </div>
         <div class="form-group">
-            <label>Start Date:</label>
-            <input type="date" name="start_date" class="form-control" value="{{ show.start_date }}" required>
+            <label for="start_date">Start Date:</label>
+            <input type="date" name="start_date" id="start_date" class="form-control" value="{{ show.start_date }}" required>
         </div>
         <div class="form-group">
-            <label>End Date:</label>
-            <input type="date" name="end_date" class="form-control" value="{{ show.end_date }}" required>
+            <label for="end_date">End Date:</label>
+            <input type="date" name="end_date" id="end_date" class="form-control" value="{{ show.end_date }}" required>
         </div>
         <div class="form-group">
-            <label>Start Time:</label>
-            <input type="time" name="start_time" class="form-control" value="{{ show.start_time }}" required>
+            <label for="start_time">Start Time:</label>
+            <input type="time" name="start_time" id="start_time" class="form-control" value="{{ show.start_time }}" required>
         </div>
         <div class="form-group">
-            <label>End Time:</label>
-            <input type="time" name="end_time" class="form-control" value="{{ show.end_time }}" required>
+            <label for="end_time">End Time:</label>
+            <input type="time" name="end_time" id="end_time" class="form-control" value="{{ show.end_time }}" required>
         </div>
         <div class="form-group">
-            <label>Days of Week:</label>
-            <select name="days_of_week" class="form-control" required>
+            <label for="days_of_week">Day of the Week:</label>
+            <select name="days_of_week" id="days_of_week" class="form-control" required>
                 <option value="Monday" {% if show.days_of_week == "Monday" %}selected{% endif %}>Monday</option>
                 <option value="Tuesday" {% if show.days_of_week == "Tuesday" %}selected{% endif %}>Tuesday</option>
                 <option value="Wednesday" {% if show.days_of_week == "Wednesday" %}selected{% endif %}>Wednesday</option>
@@ -48,7 +48,7 @@
             </select>
         </div>
         <button type="submit" class="btn btn-primary">Update Show</button>
-        <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
+        <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Cancel</a>
     </form>
 </div>
 

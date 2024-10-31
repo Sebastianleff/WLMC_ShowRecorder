@@ -6,3 +6,4 @@ __pycache__/
 recordings/
 uploads/
 app.db
+migrations/
