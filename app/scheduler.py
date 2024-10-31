@@ -23,7 +23,7 @@ def init_scheduler(app):
 def refresh_schedule(app):
     """Refresh the scheduler with the latest shows from the database."""
     inspector = inspect(db.engine)
-    if 'show' in inspector.get_table_names():  # Check if the 'show' table exists
+    if 'show' in inspector.get_table_names():
         scheduler.remove_all_jobs()
         shows = Show.query.all()
         for show in shows:

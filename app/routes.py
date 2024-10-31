@@ -21,7 +21,7 @@ def index():
 @main_bp.route('/update_schedule', methods=['POST'])
 def update_schedule():
     """Route to refresh the schedule."""
-    refresh_schedule(current_app)  # Pass the current app instance
+    refresh_schedule(current_app)
     flash("Schedule updated successfully!", "info")
     return redirect(url_for('main.index'))
 
