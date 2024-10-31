@@ -17,7 +17,7 @@ def create_app(config_class=Config):
             init()
             migrate(message="Initial migration")
             upgrade()
-            
+
         init_scheduler(app)
 
     from .routes import main_bp
