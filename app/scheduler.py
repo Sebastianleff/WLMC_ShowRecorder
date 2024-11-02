@@ -1,11 +1,11 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from .models import db, Show
 from config import Config
+from datetime import datetime
 from sqlalchemy import inspect
 import logging
 import os
 import ffmpeg
-from datetime import datetime
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -16,24 +16,24 @@ scheduler = BackgroundScheduler()
 
 def init_scheduler(app):
     """Initialize and start the scheduler with the Flask app context."""
+    
     scheduler.start()
     with app.app_context():
-        refresh_schedule(app)
+        refresh_schedule()
 
-def refresh_schedule(app):
+def refresh_schedule():
     """Refresh the scheduler with the latest shows from the database."""
+    
     inspector = inspect(db.engine)
-    if 'show' in inspector.get_table_names():
-        scheduler.remove_all_jobs()
-        shows = Show.query.all()
-        for show in shows:
-            schedule_recording(show)
-        logger.info("Schedule updated successfully.")
-    else:
-        logger.warning("The 'show' table does not exist yet. Skipping scheduler setup.")
+    'show' in inspector.get_table_names()
+    scheduler.remove_all_jobs()
+    shows = Show.query.all()
+    for show in shows:
+        schedule_recording(show)
 
 def record_stream(STREAM_URL, duration, output_file):
     """Records the stream using FFmpeg."""
+    
     try:
         logger.info(f"Starting recording: {output_file} for {duration} seconds")
         (
@@ -49,6 +49,7 @@ def record_stream(STREAM_URL, duration, output_file):
 
 def delete_show(show_id):
     """Delete a show from the database after its last airing."""
+    
     with db.app_context():
         show = Show.query.get(show_id)
         if show:
@@ -57,18 +58,30 @@ def delete_show(show_id):
             logger.info(f"Show {show_id} deleted.")
 
 def schedule_recording(show):
-    """Schedules the recording and deletion of a show."""
-    now = datetime.now()
-    start_time = datetime.combine(now.date(), show.start_time)
-    end_time = datetime.combine(now.date(), show.end_time)
-    duration = (end_time - start_time).total_seconds()
-    output_file = f"{Config.OUTPUT_FOLDER}/{show.host_first_name}_{show.host_last_name}_{start_time.strftime('%Y%m%d_%H%M%S')}.mp3"
+    """Schedules the recurring recording and deletion of a show."""
+    
+    start_time = datetime.combine(show.start_date, show.start_time)
+    day_of_week = show.days_of_week
+    duration = (datetime.combine(show.start_date, show.end_time) - start_time).total_seconds()
+    output_file = f"{Config.OUTPUT_FOLDER}/{show.host_first_name}_{show.host_last_name}_{start_time.strftime('%Y-%m-%d')}_RAWDATA.mp3"
+    delete_end_time = datetime.combine(show.end_date, show.end_time)
 
     scheduler.add_job(
-        record_stream, 'date', run_date=start_time,
-        args=[Config.STREAM_URL, duration, output_file]
+        record_stream, 'cron',
+        day_of_week=day_of_week, hour=show.start_time.hour, minute=show.start_time.minute,
+        args=[Config.STREAM_URL, duration, output_file],
+        start_date=start_time,
+        end_date=show.end_date,
+        misfire_grace_time=300,
+        replace_existing=True,
+        id=f"record_{show.id}"
     )
+
     scheduler.add_job(
-        delete_show, 'date', run_date=datetime.combine(show.end_date, show.end_time),
-        args=[show.id]
+        delete_show, 'date', 
+        run_date=delete_end_time,
+        args=[show.id],
+        misfire_grace_time=600,
+        replace_existing=True,
+        id=f"delete_{show.id}"
     )
