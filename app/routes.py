@@ -45,6 +45,7 @@ def login():
 @main_bp.route('/logout')
 def logout():
 	"""Logout route to clear the session."""
+ 
 	try:
 		session.pop('authenticated', None)
 		flash("You have been logged out.", "info")
@@ -128,6 +129,7 @@ def edit_show(id):
 @admin_required
 def delete_show(id):
 	"""Route to delete a show."""
+ 
 	try:
 		show = Show.query.get_or_404(id)
 		db.session.delete(show)
@@ -142,6 +144,7 @@ def delete_show(id):
 @admin_required
 def clear_all():
 	"""Route to clear all shows."""
+ 
 	try:
 		db.session.query(Show).delete()
 		db.session.commit()
