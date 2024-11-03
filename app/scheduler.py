@@ -34,6 +34,8 @@ def refresh_schedule():
 def record_stream(STREAM_URL, duration, output_file):
     """Records the stream using FFmpeg."""
     
+    output_file = f"{output_file}_{datetime.now().strftime('%y-%d-%m')}_RAWDATA.mp3"
+
     try:
         logger.info(f"Starting recording: {output_file} for {duration} seconds")
         (
@@ -63,7 +65,7 @@ def schedule_recording(show):
     start_time = datetime.combine(show.start_date, show.start_time)
     day_of_week = show.days_of_week
     duration = (datetime.combine(show.start_date, show.end_time) - start_time).total_seconds()
-    output_file = f"{Config.OUTPUT_FOLDER}/{show.host_first_name}_{show.host_last_name}_{start_time.strftime('%Y-%m-%d')}_RAWDATA.mp3"
+    output_file = f"{Config.OUTPUT_FOLDER}/{show.host_first_name}_{show.host_last_name}"
     delete_end_time = datetime.combine(show.end_date, show.end_time)
 
     scheduler.add_job(
