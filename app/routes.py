@@ -1,9 +1,9 @@
-import logging
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
-from .models import db, Show
 from .scheduler import refresh_schedule
-from functools import wraps
 from datetime import datetime
+from .models import db, Show
+from functools import wraps
+import logging
 
 logging.basicConfig(level=logging.DEBUG)
 
