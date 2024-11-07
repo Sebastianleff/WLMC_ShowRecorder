@@ -19,13 +19,17 @@ def admin_required(f):
 	return decorated_function
 
 @main_bp.route('/')
-@admin_required
 def index():
-	"""Render the home page with paginated shows."""
- 
-	page = request.args.get('page', 1, type=int)
-	shows = Show.query.paginate(page=page, per_page=10)
-	return render_template('index.html', shows=shows)
+    """Render the main index page."""
+    return render_template('index.html')
+
+@main_bp.route('/shows')
+@admin_required
+def shows():
+    """Render the shows database page with paginated shows."""
+    page = request.args.get('page', 1, type=int)
+    shows = Show.query.paginate(page=page, per_page=10)
+    return render_template('shows_database.html', shows=shows)
 
 @main_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -37,7 +41,7 @@ def login():
 				password == current_app.config['ADMIN_PASSWORD']):
 			session['authenticated'] = True
 			flash("You are now logged in.", "success")
-			return redirect(url_for('main.index'))
+			return redirect(url_for('main.shows'))
 		else:
 			flash("Invalid credentials. Please try again.", "danger")
 	return render_template('login.html')
@@ -48,11 +52,11 @@ def logout():
  
 	try:
 		session.pop('authenticated', None)
-		flash("You have been logged out.", "info")
-		return redirect(url_for('main.login'))
+		#flash("You are now logged out.", "info") removed becouse of index display issue
+		return redirect(url_for('main.index'))
 	except Exception as e:
 		flash(f"Error logging out: {e}", "danger")
-		return redirect(url_for('main.index'))
+		return redirect(url_for('main.shows'))
 
 @main_bp.route('/update_schedule', methods=['POST'])
 @admin_required
@@ -62,10 +66,10 @@ def update_schedule():
 	try:
 		refresh_schedule()
 		flash("Schedule updated successfully!", "success")
-		return redirect(url_for('main.index'))
+		return redirect(url_for('main.shows'))
 	except Exception as e:
 		flash(f"Error updating schedule: {e}", "danger")
-		return redirect(url_for('main.index'))
+		return redirect(url_for('main.shows'))
 
 @main_bp.route('/show/add', methods=['GET', 'POST'])
 @admin_required
@@ -88,12 +92,12 @@ def add_show():
 			db.session.commit()
 			flash("Show added successfully!", "success")
 	
-			return redirect(url_for('main.index'))
+			return redirect(url_for('main.shows'))
 
 		return render_template('add_show.html')
 	except Exception as e:
 		flash(f"Error adding show: {e}", "danger")
-		return redirect(url_for('main.index'))
+		return redirect(url_for('main.shows'))
 
 @main_bp.route('/show/edit/<int:id>', methods=['GET', 'POST'])
 @admin_required
@@ -117,12 +121,12 @@ def edit_show(id):
 			update_schedule()
 			flash("Show updated successfully!", "success")
 
-			return redirect(url_for('main.index'))
+			return redirect(url_for('main.shows'))
 
 		return render_template('edit_show.html', show=show)
 	except Exception as e:
 		flash(f"Error editing show: {e}", "danger")
-		return redirect(url_for('main.index'))
+		return redirect(url_for('main.shows'))
 
 
 @main_bp.route('/show/delete/<int:id>', methods=['POST'])
@@ -135,10 +139,10 @@ def delete_show(id):
 		db.session.delete(show)
 		db.session.commit()
 		flash("Show deleted successfully!", "success")
-		return redirect(url_for('main.index'))
+		return redirect(url_for('main.shows'))
 	except Exception as e:
 		flash(f"Error deleting show: {e}", "danger")
-		return redirect(url_for('main.index'))
+		return redirect(url_for('main.shows'))
 
 @main_bp.route('/clear_all', methods=['POST'])
 @admin_required
@@ -149,7 +153,7 @@ def clear_all():
 		db.session.query(Show).delete()
 		db.session.commit()
 		flash("All shows have been deleted.", "info")
-		return redirect(url_for('main.index'))
+		return redirect(url_for('main.shows'))
 	except Exception as e:
 		flash(f"Error deleting shows: {e}", "danger")
-		return redirect(url_for('main.index'))
+		return redirect(url_for('main.shows'))
