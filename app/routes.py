@@ -32,7 +32,7 @@ def shows():
     """Render the shows database page with paginated shows."""
     
     page = request.args.get('page', 1, type=int)
-    shows = Show.query.paginate(page=page, per_page=10)
+    shows = Show.query.paginate(page=page, per_page=15)
     return render_template('shows_database.html', shows=shows)
 
 @main_bp.route('/login', methods=['GET', 'POST'])
