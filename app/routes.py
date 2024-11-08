@@ -22,18 +22,18 @@ def admin_required(f):
 
 @main_bp.route('/')
 def index():
-    """Render the main index page."""
-    
-    return render_template('index.html')
+	"""Render the main index page."""
+	
+	return render_template('index.html')
 
 @main_bp.route('/shows')
 @admin_required
 def shows():
-    """Render the shows database page with paginated shows."""
-    
-    page = request.args.get('page', 1, type=int)
-    shows = Show.query.paginate(page=page, per_page=15)
-    return render_template('shows_database.html', shows=shows)
+	"""Render the shows database page with paginated shows."""
+	
+	page = request.args.get('page', 1, type=int)
+	shows = Show.query.paginate(page=page, per_page=15)
+	return render_template('shows_database.html', shows=shows)
 
 @main_bp.route('/login', methods=['GET', 'POST'])
 def login():
