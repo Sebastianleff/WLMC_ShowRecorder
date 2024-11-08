@@ -1,11 +1,11 @@
 from apscheduler.schedulers.background import BackgroundScheduler
+from sqlalchemy import inspect
+from datetime import datetime
 from .models import db, Show
 from config import Config
-from datetime import datetime
-from sqlalchemy import inspect
 import logging
-import os
 import ffmpeg
+import os
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -48,7 +48,7 @@ def record_stream(STREAM_URL, duration, output_file):
         logger.info(f"Recording saved as {output_file}")
     except ffmpeg._run.Error as e:
         logger.error(f"Recording error: {e.stderr.decode()}")
-
+        
 def delete_show(show_id):
     """Delete a show from the database after its last airing."""
     
