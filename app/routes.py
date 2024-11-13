@@ -22,9 +22,9 @@ def admin_required(f):
 
 @main_bp.route('/')
 def index():
-	"""Render the main index page."""
+	"""Redirect to the shows page."""
 	
-	return render_template('index.html')
+	return redirect(url_for('main.shows'))
 
 @main_bp.route('/shows')
 @admin_required
