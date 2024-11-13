@@ -4,6 +4,7 @@ from datetime import datetime
 from .models import db, Show
 from functools import wraps
 import logging
+import os
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -103,6 +104,39 @@ def add_show():
 	except Exception as e:
 		flash(f"Error adding show: {e}", "danger")
 		return redirect(url_for('main.shows'))
+
+@main_bp.route('/settings', methods=['GET', 'POST'])
+def settings():
+    """Route to update the application settings."""
+    
+    if request.method == 'POST':
+        try:
+            # Update environment variables with form data
+            os.environ['ADMIN_USERNAME'] = request.form['admin_username']
+            os.environ['ADMIN_PASSWORD'] = request.form['admin_password']
+            os.environ['STREAM_URL'] = request.form['stream_url']
+            os.environ['OUTPUT_FOLDER'] = request.form['output_folder']
+            os.environ['SECRET_KEY'] = request.form['secret_key']
+            
+            flash("Settings updated successfully!", "success")
+            return redirect(url_for('main.shows'))  # Redirect to the main show page after saving
+            
+        except Exception as e:
+            # Handle any exceptions and display an error message
+            flash(f"An error occurred while updating settings: {str(e)}", "danger")
+            return redirect(url_for('main.settings'))  # Redirect back to settings if an error occurs
+
+    # Prefill form fields with existing environment variables or defaults from config
+    config = current_app.config
+    settings_data = {
+        'admin_username': os.getenv("ADMIN_USERNAME", config['ADMIN_USERNAME']),
+        'admin_password': os.getenv("ADMIN_PASSWORD", config['ADMIN_PASSWORD']),
+        'stream_url': os.getenv("STREAM_URL", config['STREAM_URL']),
+        'output_folder': os.getenv("OUTPUT_FOLDER", config['OUTPUT_FOLDER']),
+        'secret_key': os.getenv("SECRET_KEY", config['SECRET_KEY'])
+    }
+    
+    return render_template('settings.html', **settings_data)
 
 @main_bp.route('/show/edit/<int:id>', methods=['GET', 'POST'])
 @admin_required
