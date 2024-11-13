@@ -34,7 +34,7 @@ def refresh_schedule():
 def record_stream(STREAM_URL, duration, output_file):
     """Records the stream using FFmpeg."""
     
-    output_file = f"{output_file}_{datetime.now().strftime('%y-%d-%m')}_RAWDATA.mp3"
+    output_file = f"{output_file}_{datetime.now().strftime('%m-%d-%y')}_RAWDATA.mp3"
 
     try:
         logger.info(f"Starting recording: {output_file} for {duration} seconds")
@@ -48,7 +48,7 @@ def record_stream(STREAM_URL, duration, output_file):
         logger.info(f"Recording saved as {output_file}")
     except ffmpeg._run.Error as e:
         logger.error(f"Recording error: {e.stderr.decode()}")
-
+		
 def delete_show(show_id):
 	"""Delete a show from the database after its last airing."""
 	
