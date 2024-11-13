@@ -34,7 +34,7 @@ def refresh_schedule():
 def record_stream(STREAM_URL, duration, output_file):
     """Records the stream using FFmpeg."""
     
-    output_file = f"{output_file}_{datetime.now().strftime('%y-%d-%m')}_RAWDATA.mp3"
+    output_file = f"{output_file}_{datetime.now().strftime('%m-%d-%y')}_RAWDATA.mp3"
 
     try:
         logger.info(f"Starting recording: {output_file} for {duration} seconds")
