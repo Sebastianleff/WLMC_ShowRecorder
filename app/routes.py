@@ -10,6 +10,8 @@ logging.basicConfig(level=logging.DEBUG)
 main_bp = Blueprint('main', __name__)
 
 def admin_required(f):
+	"""Decorator to require admin authentication."""
+ 
 	@wraps(f)
 	def decorated_function(*args, **kwargs):
 		if not session.get('authenticated'):
@@ -20,20 +22,23 @@ def admin_required(f):
 
 @main_bp.route('/')
 def index():
-    """Render the main index page."""
-    return render_template('index.html')
+	"""Render the main index page."""
+	
+	return render_template('index.html')
 
 @main_bp.route('/shows')
 @admin_required
 def shows():
-    """Render the shows database page with paginated shows."""
-    page = request.args.get('page', 1, type=int)
-    shows = Show.query.paginate(page=page, per_page=10)
-    return render_template('shows_database.html', shows=shows)
+	"""Render the shows database page with paginated shows."""
+	
+	page = request.args.get('page', 1, type=int)
+	shows = Show.query.paginate(page=page, per_page=15)
+	return render_template('shows_database.html', shows=shows)
 
 @main_bp.route('/login', methods=['GET', 'POST'])
 def login():
 	"""Login route for admin authentication."""
+ 
 	if request.method == 'POST':
 		username = request.form['username']
 		password = request.form['password']
