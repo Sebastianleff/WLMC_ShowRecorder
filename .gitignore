@@ -8,3 +8,4 @@ uploads/
 app.db
 migrations/
 instance/
+.DS_Store
