@@ -11,7 +11,7 @@
 
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-        <div class="position-fixed top-0 start-50 translate-middle-x mt-3 w-75" style="z-index: 1050;">
+        <div class="position-fixed top-0 start-50 translate-middle-x mt-3 d-inline-block" style="z-index: 1050; max-width: 90%;">
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                     {{ message }}
@@ -66,14 +66,6 @@
                 <i class="bi bi-info-circle-fill ms-1" data-bs-toggle="tooltip" title="The folder where recordings will be saved."></i>
             </label>
             <input type="text" name="output_folder" id="output_folder" class="form-control" value="{{ output_folder }}" required>
-        </div>
-        
-        <div class="mb-3">
-            <label for="secret_key" class="form-label">
-                Secret Key
-                <i class="bi bi-info-circle-fill ms-1" data-bs-toggle="tooltip" title="A secret key used by Flask for session management and security."></i>
-            </label>
-            <input type="text" name="secret_key" id="secret_key" class="form-control" value="{{ secret_key }}" required>
         </div>
         
         <button type="submit" class="btn btn-primary">Save Settings</button>

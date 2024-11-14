@@ -109,31 +109,35 @@ def add_show():
 def settings():
     """Route to update the application settings."""
     
+    config_file = os.path.join(current_app.instance_path, 'user_config.py')
+
     if request.method == 'POST':
         try:
-            # Update environment variables with form data
-            os.environ['ADMIN_USERNAME'] = request.form['admin_username']
-            os.environ['ADMIN_PASSWORD'] = request.form['admin_password']
-            os.environ['STREAM_URL'] = request.form['stream_url']
-            os.environ['OUTPUT_FOLDER'] = request.form['output_folder']
-            os.environ['SECRET_KEY'] = request.form['secret_key']
-            
+            settings = {
+                'ADMIN_USERNAME': request.form['admin_username'],
+                'ADMIN_PASSWORD': request.form['admin_password'],
+                'STREAM_URL': request.form['stream_url'],
+                'OUTPUT_FOLDER': request.form['output_folder'],
+            }
+
+            with open(config_file, 'w') as f:
+                for key, value in settings.items():
+                    if value:
+                        f.write(f"{key} = {repr(value)}\n")
+
             flash("Settings updated successfully!", "success")
-            return redirect(url_for('main.shows'))  # Redirect to the main show page after saving
+            return redirect(url_for('main.shows'))
             
         except Exception as e:
-            # Handle any exceptions and display an error message
             flash(f"An error occurred while updating settings: {str(e)}", "danger")
-            return redirect(url_for('main.settings'))  # Redirect back to settings if an error occurs
+            return redirect(url_for('main.settings'))
 
-    # Prefill form fields with existing environment variables or defaults from config
     config = current_app.config
     settings_data = {
-        'admin_username': os.getenv("ADMIN_USERNAME", config['ADMIN_USERNAME']),
-        'admin_password': os.getenv("ADMIN_PASSWORD", config['ADMIN_PASSWORD']),
-        'stream_url': os.getenv("STREAM_URL", config['STREAM_URL']),
-        'output_folder': os.getenv("OUTPUT_FOLDER", config['OUTPUT_FOLDER']),
-        'secret_key': os.getenv("SECRET_KEY", config['SECRET_KEY'])
+        'admin_username': config.get("ADMIN_USERNAME"),
+        'admin_password': config.get("ADMIN_PASSWORD"),
+        'stream_url': config.get("STREAM_URL"),
+        'output_folder': config.get("OUTPUT_FOLDER"),
     }
     
     return render_template('settings.html', **settings_data)

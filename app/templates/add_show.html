@@ -12,7 +12,7 @@
 
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-        <div class="position-fixed top-0 start-50 translate-middle-x mt-3 w-75" style="z-index: 1050;">
+        <div class="position-fixed top-0 start-50 translate-middle-x mt-3 d-inline-block" style="z-index: 1050; max-width: 90%;">
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                     {{ message }}
