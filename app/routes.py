@@ -157,12 +157,11 @@ def settings():
 				'OUTPUT_FOLDER': request.form['output_folder'],
 				'DEFAULT_START_DATE': request.form['default_start_date'],
 				'DEFAULT_END_DATE': request.form['default_end_date'],
-				'AUTO_CREATE_SHOW_FOLDERS': request.form['AUTO_CREATE_SHOW_FOLDERS'],
+				'AUTO_CREATE_SHOW_FOLDERS': 'auto_create_show_folders' in request.form,
 			}
 
 			with open(config_file, 'w') as f:
 				for key, value in settings.items():
-					if value:
 						f.write(f"{key} = {repr(value)}\n")
 
 			flash("Settings updated successfully!", "success")
