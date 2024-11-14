@@ -35,11 +35,12 @@ def create_app(config_class=Config):
     # Run migrations
     with app.app_context():
         from flask_migrate import upgrade, init, migrate
-        if not os.path.exists(os.path.join(os.getcwd(), 'migrations')):
-            init()
+        migrations_dir = os.path.join(app.instance_path, 'migrations')  # Use the instance folder for migrations
+        if not os.path.exists(migrations_dir):
+            init(directory=migrations_dir)  # Specify directory for migrations
         try:
-            migrate(message="Initial migration")
-            upgrade()
+            migrate(message="Initial migration", directory=migrations_dir)  # Specify directory for migrations
+            upgrade(directory=migrations_dir)  # Specify directory for migrations
         except Exception as e:
             print(f"Error applying migrations: {e}")
     
