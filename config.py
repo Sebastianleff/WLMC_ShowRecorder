@@ -8,3 +8,5 @@ class Config:
     OUTPUT_FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), "instance", "recordings")
     ADMIN_USERNAME = "admin"
     ADMIN_PASSWORD = "admin"
+    DEFAULT_START_DATE = "2024-01-01"
+    DEFAULT_END_DATE = "2024-01-01"

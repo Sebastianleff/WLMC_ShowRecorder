@@ -80,32 +80,51 @@ def update_schedule():
 @main_bp.route('/show/add', methods=['GET', 'POST'])
 @admin_required
 def add_show():
-	"""Route to add a new show."""
- 
-	try:
-		if request.method == 'POST':
-			short_day_name = request.form['days_of_week'].lower()[:3]
-			show = Show(
-				host_first_name=request.form['host_first_name'],
-				host_last_name=request.form['host_last_name'],
-				start_date=datetime.strptime(request.form['start_date'], '%Y-%m-%d').date(),
-				end_date=datetime.strptime(request.form['end_date'], '%Y-%m-%d').date(),
-				start_time=datetime.strptime(request.form['start_time'], '%H:%M').time(),
-				end_time=datetime.strptime(request.form['end_time'], '%H:%M').time(),
-				days_of_week=short_day_name
-			)
-			db.session.add(show)
-			db.session.commit()
-			flash("Show added successfully!", "success")
-	
-			return redirect(url_for('main.shows'))
+    """Route to add a new show."""
+    try:
+        if request.method == 'POST':
+            start_date = request.form['start_date'] or current_app.config['DEFAULT_START_DATE']
+            end_date = request.form['end_date'] or current_app.config['DEFAULT_END_DATE']
+            start_time = request.form['start_time']
+            end_time = request.form['end_time']
 
-		return render_template('add_show.html')
-	except Exception as e:
-		flash(f"Error adding show: {e}", "danger")
-		return redirect(url_for('main.shows'))
+            start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+            end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+            start_time_obj = datetime.strptime(start_time, '%H:%M').time()
+            end_time_obj = datetime.strptime(end_time, '%H:%M').time()
+
+            today = datetime.today().date()
+            if end_date_obj < today:
+                flash("End date cannot be in the past!", "danger")
+                return redirect(url_for('main.add_show'))
+
+            if end_time_obj <= start_time_obj:
+                flash("End time cannot be before start time!", "danger")
+                return redirect(url_for('main.add_show'))
+
+            short_day_name = request.form['days_of_week'].lower()[:3]
+            
+            show = Show(
+                host_first_name=request.form['host_first_name'],
+                host_last_name=request.form['host_last_name'],
+                start_date=start_date_obj,
+                end_date=end_date_obj,
+                start_time=start_time_obj,
+                end_time=end_time_obj,
+                days_of_week=short_day_name
+            )
+            db.session.add(show)
+            db.session.commit()
+            flash("Show added successfully!", "success")
+            return redirect(url_for('main.shows'))
+        
+        return render_template('add_show.html')
+    except Exception as e:
+        flash(f"Error adding show: {e}", "danger")
+        return redirect(url_for('main.shows'))
 
 @main_bp.route('/settings', methods=['GET', 'POST'])
+@admin_required
 def settings():
     """Route to update the application settings."""
     
@@ -118,6 +137,8 @@ def settings():
                 'ADMIN_PASSWORD': request.form['admin_password'],
                 'STREAM_URL': request.form['stream_url'],
                 'OUTPUT_FOLDER': request.form['output_folder'],
+                'DEFAULT_START_DATE': request.form['default_start_date'],
+                'DEFAULT_END_DATE': request.form['default_end_date'],
             }
 
             with open(config_file, 'w') as f:
@@ -138,6 +159,8 @@ def settings():
         'admin_password': config.get("ADMIN_PASSWORD"),
         'stream_url': config.get("STREAM_URL"),
         'output_folder': config.get("OUTPUT_FOLDER"),
+        'default_start_date': config.get("DEFAULT_START_DATE", "2024-01-01"),
+        'default_end_date': config.get("DEFAULT_END_DATE", "2024-01-01"),
     }
     
     return render_template('settings.html', **settings_data)
