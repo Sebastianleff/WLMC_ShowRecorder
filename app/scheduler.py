@@ -1,4 +1,5 @@
 from apscheduler.schedulers.background import BackgroundScheduler
+from flask import current_app
 from sqlalchemy import inspect
 from datetime import datetime
 from .models import db, Show
@@ -32,22 +33,22 @@ def refresh_schedule():
 		schedule_recording(show)
 
 def record_stream(STREAM_URL, duration, output_file):
-    """Records the stream using FFmpeg."""
-    
-    output_file = f"{output_file}_{datetime.now().strftime('%m-%d-%y')}_RAWDATA.mp3"
-
-    try:
-        logger.info(f"Starting recording: {output_file} for {duration} seconds")
-        (
-            ffmpeg
-            .input(STREAM_URL, t=duration)
-            .output(output_file, acodec='copy')
-            .overwrite_output()
-            .run()
-        )
-        logger.info(f"Recording saved as {output_file}")
-    except ffmpeg._run.Error as e:
-        logger.error(f"Recording error: {e.stderr.decode()}")
+	"""Records the stream using FFmpeg."""
+	
+	output_file = f"{output_file}_{datetime.now().strftime('%m-%d-%y')}_RAWDATA.mp3"
+	
+	try:
+		logger.info(f"Starting recording: {output_file} for {duration} seconds")
+		(
+			ffmpeg
+			.input(STREAM_URL, t=duration)
+			.output(output_file, acodec='copy')
+			.overwrite_output()
+			.run()
+		)
+		logger.info(f"Recording saved as {output_file}")
+	except ffmpeg._run.Error as e:
+		logger.error(f"Recording error: {e.stderr.decode()}")
 		
 def delete_show(show_id):
 	"""Delete a show from the database after its last airing."""
@@ -65,13 +66,22 @@ def schedule_recording(show):
 	start_time = datetime.combine(show.start_date, show.start_time)
 	day_of_week = show.days_of_week
 	duration = (datetime.combine(show.start_date, show.end_time) - start_time).total_seconds()
-	output_file = f"{Config.OUTPUT_FOLDER}/{show.host_first_name}_{show.host_last_name}"
 	delete_end_time = datetime.combine(show.end_date, show.end_time)
+	stream_url = current_app.config['STREAM_URL']
+	
+	if current_app.config['AUTO_CREATE_SHOW_FOLDERS']:
+		show_folder = os.path.join(current_app.config['OUTPUT_FOLDER'], f"{show.host_first_name}_{show.host_last_name}")
+		if not os.path.exists(show_folder):
+			os.mkdir(show_folder)
+	else:
+		show_folder = current_app.config['OUTPUT_FOLDER']
+	
+	output_file = os.path.join(show_folder, f"{show.host_first_name}_{show.host_last_name}")
 
 	scheduler.add_job(
 		record_stream, 'cron',
 		day_of_week=day_of_week, hour=show.start_time.hour, minute=show.start_time.minute,
-		args=[Config.STREAM_URL, duration, output_file],
+		args=[stream_url, duration, output_file],
 		start_date=start_time,
 		end_date=show.end_date,
 		misfire_grace_time=300,

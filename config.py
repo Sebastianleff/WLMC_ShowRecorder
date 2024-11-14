@@ -10,3 +10,4 @@ class Config:
     ADMIN_PASSWORD = "admin"
     DEFAULT_START_DATE = "2024-01-01"
     DEFAULT_END_DATE = "2024-01-01"
+    AUTO_CREATE_SHOW_FOLDERS = False

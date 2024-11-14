@@ -11,6 +11,3 @@ class Show(db.Model):
 	start_time = db.Column(db.Time, nullable=False)
 	end_time = db.Column(db.Time, nullable=False)
 	days_of_week = db.Column(db.String(20), nullable=False)
-
-	def __repr__(self):
-		return f"<Show {self.host_first_name} {self.host_last_name}>"
