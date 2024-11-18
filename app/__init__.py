@@ -1,17 +1,22 @@
 import os
 import secrets
+import threading
 from flask import Flask
 from config import Config
 from .models import db
 from .scheduler import init_scheduler
 from flask_migrate import Migrate
 
+config_lock = threading.Lock()
+
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
     
-    os.makedirs(app.instance_path, exist_ok=True)
-    os.makedirs(app.config['OUTPUT_FOLDER'], exist_ok=True)
+    if not os.path.exists(app.instance_path):
+        os.mkdir(app.instance_path)
+    if not os.path.exists(app.config['OUTPUT_FOLDER']):
+        os.mkdir(app.config['OUTPUT_FOLDER'])
 
     user_config_path = os.path.join(app.instance_path, 'user_config.py')
     
@@ -35,7 +40,7 @@ def create_app(config_class=Config):
             migrate(message="Initial migration", directory=migrations_dir)
             upgrade(directory=migrations_dir)
         except Exception as e:
-            print(f"Error applying migrations: {e}")
+            app.logger.error(f"Error applying migrations: {e}")
     
         init_scheduler(app)
     

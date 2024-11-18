@@ -1,14 +1,13 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
 from .scheduler import refresh_schedule
-from datetime import datetime
+from datetime import datetime, time
 from .models import db, Show
 from functools import wraps
-import logging
 import os
-
-logging.basicConfig(level=logging.DEBUG)
+import threading
 
 main_bp = Blueprint('main', __name__)
+config_lock = threading.Lock()
 
 def admin_required(f):
 	"""Decorator to require admin authentication."""
@@ -24,14 +23,12 @@ def admin_required(f):
 @main_bp.route('/')
 def index():
 	"""Redirect to the shows page."""
-	
 	return redirect(url_for('main.shows'))
 
 @main_bp.route('/shows')
 @admin_required
 def shows():
 	"""Render the shows database page with paginated shows."""
-	
 	page = request.args.get('page', 1, type=int)
 	shows = Show.query.paginate(page=page, per_page=15)
 	return render_template('shows_database.html', shows=shows)
@@ -39,7 +36,6 @@ def shows():
 @main_bp.route('/login', methods=['GET', 'POST'])
 def login():
 	"""Login route for admin authentication."""
- 
 	if request.method == 'POST':
 		username = request.form['username']
 		password = request.form['password']
@@ -55,10 +51,9 @@ def login():
 @main_bp.route('/logout')
 def logout():
 	"""Logout route to clear the session."""
- 
 	try:
 		session.pop('authenticated', None)
-		#flash("You are now logged out.", "info") removed becouse of index display issue
+		flash("You have successfully logged out.", "success")
 		return redirect(url_for('main.index'))
 	except Exception as e:
 		flash(f"Error logging out: {e}", "danger")
@@ -68,7 +63,6 @@ def logout():
 @admin_required
 def add_show():
 	"""Route to add a new show."""
-	
 	try:
 		if request.method == 'POST':
 			start_date = request.form['start_date'] or current_app.config['DEFAULT_START_DATE']
@@ -86,7 +80,7 @@ def add_show():
 				flash("End date cannot be in the past!", "danger")
 				return redirect(url_for('main.add_show'))
 
-			if end_time_obj == datetime.time(0, 0) and start_time_obj != datetime.time(0, 0):
+			if end_time_obj == time(0, 0) and start_time_obj != time(0, 0):
 				pass
 			elif end_time_obj <= start_time_obj:
 				flash("End time cannot be before start time!", "danger")
@@ -105,7 +99,7 @@ def add_show():
 			)
 			db.session.add(show)
 			db.session.commit()
-			update_schedule()
+			refresh_schedule()
 			flash("Show added successfully!", "success")
 			return redirect(url_for('main.shows'))
 		
@@ -118,7 +112,6 @@ def add_show():
 @admin_required
 def edit_show(id):
 	"""Route to edit an existing show."""
- 
 	show = Show.query.get_or_404(id)
 	try:
 		if request.method == 'POST':
@@ -133,7 +126,7 @@ def edit_show(id):
 			show.days_of_week = short_day_name
 	
 			db.session.commit()
-			update_schedule()
+			refresh_schedule()
 			flash("Show updated successfully!", "success")
 
 			return redirect(url_for('main.shows'))
@@ -147,7 +140,6 @@ def edit_show(id):
 @admin_required
 def settings():
 	"""Route to update the application settings."""
-	
 	config_file = os.path.join(current_app.instance_path, 'user_config.py')
 
 	if request.method == 'POST':
@@ -164,7 +156,10 @@ def settings():
 
 			with open(config_file, 'w') as f:
 				for key, value in settings.items():
-						f.write(f"{key} = {repr(value)}\n")
+					f.write(f"{key} = {repr(value)}\n")
+
+			with config_lock:
+				current_app.config.from_pyfile(config_file, silent=True)
 
 			flash("Settings updated successfully!", "success")
 			return redirect(url_for('main.shows'))
@@ -190,7 +185,6 @@ def settings():
 @admin_required
 def update_schedule():
 	"""Route to refresh the schedule."""
- 
 	try:
 		refresh_schedule()
 		flash("Schedule updated successfully!", "success")
@@ -203,11 +197,11 @@ def update_schedule():
 @admin_required
 def delete_show(id):
 	"""Route to delete a show."""
- 
 	try:
 		show = Show.query.get_or_404(id)
 		db.session.delete(show)
 		db.session.commit()
+		refresh_schedule()
 		flash("Show deleted successfully!", "success")
 		return redirect(url_for('main.shows'))
 	except Exception as e:
@@ -218,10 +212,10 @@ def delete_show(id):
 @admin_required
 def clear_all():
 	"""Route to clear all shows."""
- 
 	try:
 		db.session.query(Show).delete()
 		db.session.commit()
+		refresh_schedule()
 		flash("All shows have been deleted.", "info")
 		return redirect(url_for('main.shows'))
 	except Exception as e:
