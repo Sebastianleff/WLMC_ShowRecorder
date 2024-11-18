@@ -38,7 +38,7 @@ def record_stream(STREAM_URL, duration, output_file):
 			.run()
 			)
 	except ffmpeg._run.Error as e:
-		logger.error(f"Recording error: {e.stderr.decode()}")
+		current_app.logger.error(f"FFmpeg error: {e.stderr.decode()}")
 
 def delete_show(show_id):
 	"""Delete a show from the database after its last airing."""

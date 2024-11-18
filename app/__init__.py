@@ -28,15 +28,6 @@ def create_app(config_class=Config):
     else:
         app.config.from_pyfile(user_config_path, silent=True)
 
-    log_dir = os.path.join(app.instance_path, 'logs')
-    if not os.path.exists(log_dir):
-        os.mkdir(log_dir)
-    file_handler = logging.FileHandler(os.path.join(log_dir, 'app.log'))
-    file_handler.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]')
-    file_handler.setFormatter(formatter)
-    app.logger.addHandler(file_handler)
-
     db.init_app(app)
     Migrate(app, db)
 
