@@ -1,7 +1,6 @@
 import os
 import secrets
 import threading
-import logging
 from flask import Flask
 from config import Config
 from .models import db
@@ -11,17 +10,6 @@ from flask_migrate import Migrate
 config_lock = threading.Lock()
 
 def create_app(config_class=Config):
-    # Configure logging
-    logging.basicConfig(
-        level=logging.INFO,  # Set to DEBUG for more detailed logs
-        format="%(asctime)s - %(levelname)s - %(message)s",
-        handlers=[
-            logging.StreamHandler(sys.stderr),  # Send logs to stderr
-        ]
-    )
-    logger = logging.getLogger(__name__)
-    logger.info("Creating Flask application")
-    
     app = Flask(__name__)
     app.config.from_object(config_class)
     
