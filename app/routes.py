@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
 from .scheduler import refresh_schedule
-from datetime import datetime
+from datetime import datetime, time
 from .models import db, Show
 from functools import wraps
 import logging
@@ -67,81 +67,81 @@ def logout():
 @main_bp.route('/show/add', methods=['GET', 'POST'])
 @admin_required
 def add_show():
-	"""Route to add a new show."""
-	
-	try:
-		if request.method == 'POST':
-			start_date = request.form['start_date'] or current_app.config['DEFAULT_START_DATE']
-			end_date = request.form['end_date'] or current_app.config['DEFAULT_END_DATE']
-			start_time = request.form['start_time']
-			end_time = request.form['end_time']
+    """Route to add a new show."""
+    
+    try:
+        if request.method == 'POST':
+            start_date = request.form['start_date'] or current_app.config['DEFAULT_START_DATE']
+            end_date = request.form['end_date'] or current_app.config['DEFAULT_END_DATE']
+            start_time = request.form['start_time']
+            end_time = request.form['end_time']
 
-			start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
-			end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
-			start_time_obj = datetime.strptime(start_time, '%H:%M').time()
-			end_time_obj = datetime.strptime(end_time, '%H:%M').time()
+            start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+            end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+            start_time_obj = datetime.strptime(start_time, '%H:%M').time()
+            end_time_obj = datetime.strptime(end_time, '%H:%M').time()
 
-			today = datetime.today().date()
-			if end_date_obj < today:
-				flash("End date cannot be in the past!", "danger")
-				return redirect(url_for('main.add_show'))
+            today = datetime.today().date()
+            if end_date_obj < today:
+                flash("End date cannot be in the past!", "danger")
+                return redirect(url_for('main.add_show'))
 
-			if end_time_obj == datetime.time(0, 0) and start_time_obj != datetime.time(0, 0):
-				pass
-			elif end_time_obj <= start_time_obj:
-				flash("End time cannot be before start time!", "danger")
-				return redirect(url_for('main.add_show'))
+            if end_time_obj == time(0, 0) and start_time_obj != time(0, 0):
+                pass
+            elif end_time_obj <= start_time_obj:
+                flash("End time cannot be before start time!", "danger")
+                return redirect(url_for('main.add_show'))
 
-			short_day_name = request.form['days_of_week'].lower()[:3]
-			
-			show = Show(
-				host_first_name=request.form['host_first_name'],
-				host_last_name=request.form['host_last_name'],
-				start_date=start_date_obj,
-				end_date=end_date_obj,
-				start_time=start_time_obj,
-				end_time=end_time_obj,
-				days_of_week=short_day_name
-			)
-			db.session.add(show)
-			db.session.commit()
-			update_schedule()
-			flash("Show added successfully!", "success")
-			return redirect(url_for('main.shows'))
-		
-		return render_template('add_show.html')
-	except Exception as e:
-		flash(f"Error adding show: {e}", "danger")
-		return redirect(url_for('main.shows'))
+            short_day_name = request.form['days_of_week'].lower()[:3]
+            
+            show = Show(
+                host_first_name=request.form['host_first_name'],
+                host_last_name=request.form['host_last_name'],
+                start_date=start_date_obj,
+                end_date=end_date_obj,
+                start_time=start_time_obj,
+                end_time=end_time_obj,
+                days_of_week=short_day_name
+            )
+            db.session.add(show)
+            db.session.commit()
+            refresh_schedule()
+            flash("Show added successfully!", "success")
+            return redirect(url_for('main.shows'))
+        
+        return render_template('add_show.html')
+    except Exception as e:
+        flash(f"Error adding show: {e}", "danger")
+        return redirect(url_for('main.shows'))
 
 @main_bp.route('/show/edit/<int:id>', methods=['GET', 'POST'])
 @admin_required
 def edit_show(id):
-	"""Route to edit an existing show."""
+    """Route to edit an existing show."""
  
-	show = Show.query.get_or_404(id)
-	try:
-		if request.method == 'POST':
-			short_day_name = request.form['days_of_week'].lower()[:3]
-	
-			show.host_first_name = request.form['host_first_name']
-			show.host_last_name = request.form['host_last_name']
-			show.start_date = datetime.strptime(request.form['start_date'], '%Y-%m-%d').date()
-			show.end_date = datetime.strptime(request.form['end_date'], '%Y-%m-%d').date()
-			show.start_time = datetime.strptime(request.form['start_time'].strip(), '%H:%M').time()
-			show.end_time = datetime.strptime(request.form['end_time'].strip(), '%H:%M').time()
-			show.days_of_week = short_day_name
-	
-			db.session.commit()
-			update_schedule()
-			flash("Show updated successfully!", "success")
+    show = Show.query.get_or_404(id)
+    try:
+        if request.method == 'POST':
+            short_day_name = request.form['days_of_week'].lower()[:3]
+    
+            show.host_first_name = request.form['host_first_name']
+            show.host_last_name = request.form['host_last_name']
+            show.start_date = datetime.strptime(request.form['start_date'], '%Y-%m-%d').date()
+            show.end_date = datetime.strptime(request.form['end_date'], '%Y-%m-%d').date()
+            show.start_time = datetime.strptime(request.form['start_time'].strip(), '%H:%M').time()
+            show.end_time = datetime.strptime(request.form['end_time'].strip(), '%H:%M').time()
+            show.days_of_week = short_day_name
+    
+            db.session.commit()
+            refresh_schedule()
+            flash("Show updated successfully!", "success")
 
-			return redirect(url_for('main.shows'))
+            return redirect(url_for('main.shows'))
 
-		return render_template('edit_show.html', show=show)
-	except Exception as e:
-		flash(f"Error editing show: {e}", "danger")
-		return redirect(url_for('main.shows'))
+        return render_template('edit_show.html', show=show)
+    except Exception as e:
+        flash(f"Error editing show: {e}", "danger")
+        return redirect(url_for('main.shows'))
 
 @main_bp.route('/settings', methods=['GET', 'POST'])
 @admin_required
@@ -227,3 +227,11 @@ def clear_all():
 	except Exception as e:
 		flash(f"Error deleting shows: {e}", "danger")
 		return redirect(url_for('main.shows'))
+
+@main_bp.route('/config')
+@admin_required
+def config():
+    """Route to display current configuration for debugging."""
+    
+    config_items = {key: current_app.config[key] for key in current_app.config}
+    return render_template('config.html', config_items=config_items)
