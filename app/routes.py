@@ -146,45 +146,45 @@ def edit_show(id):
 @main_bp.route('/settings', methods=['GET', 'POST'])
 @admin_required
 def settings():
-	"""Route to update the application settings."""
-	
-	config_file = os.path.join(current_app.instance_path, 'user_config.py')
+    """Route to update the application settings."""
+    
+    config_file = os.path.join(current_app.instance_path, 'user_config.py')
 
-	if request.method == 'POST':
-		try:
-			settings = {
-				'ADMIN_USERNAME': request.form['admin_username'],
-				'ADMIN_PASSWORD': request.form['admin_password'],
-				'STREAM_URL': request.form['stream_url'],
-				'OUTPUT_FOLDER': request.form['output_folder'],
-				'DEFAULT_START_DATE': request.form['default_start_date'],
-				'DEFAULT_END_DATE': request.form['default_end_date'],
-				'AUTO_CREATE_SHOW_FOLDERS': 'auto_create_show_folders' in request.form,
-			}
+    if request.method == 'POST':
+        try:
+            settings = {
+                'ADMIN_USERNAME': request.form['admin_username'],
+                'ADMIN_PASSWORD': request.form['admin_password'],
+                'STREAM_URL': request.form['stream_url'],
+                'OUTPUT_FOLDER': request.form['output_folder'],
+                'DEFAULT_START_DATE': request.form['default_start_date'],
+                'DEFAULT_END_DATE': request.form['default_end_date'],
+                'AUTO_CREATE_SHOW_FOLDERS': 'auto_create_show_folders' in request.form,
+            }
 
-			with open(config_file, 'w') as f:
-				for key, value in settings.items():
-						f.write(f"{key} = {repr(value)}\n")
+            with open(config_file, 'w') as f:
+                for key, value in settings.items():
+                    f.write(f"{key} = {repr(value)}\n")
 
-			flash("Settings updated successfully!", "success")
-			return redirect(url_for('main.shows'))
-			
-		except Exception as e:
-			flash(f"An error occurred while updating settings: {str(e)}", "danger")
-			return redirect(url_for('main.settings'))
+            flash("Settings updated successfully!", "success")
+            return redirect(url_for('main.shows'))
+            
+        except Exception as e:
+            flash(f"An error occurred while updating settings: {str(e)}", "danger")
+            return redirect(url_for('main.settings'))
 
-	config = current_app.config
-	settings_data = {
-		'admin_username': config.get("ADMIN_USERNAME"),
-		'admin_password': config.get("ADMIN_PASSWORD"),
-		'stream_url': config.get("STREAM_URL"),
-		'output_folder': config.get("OUTPUT_FOLDER"),
-		'default_start_date': config.get("DEFAULT_START_DATE"),
-		'default_end_date': config.get("DEFAULT_END_DATE"),
-		'auto_create_show_folders': config.get("AUTO_CREATE_SHOW_FOLDERS"),
-	}
-	
-	return render_template('settings.html', **settings_data)
+    config = current_app.config
+    settings_data = {
+        'admin_username': config.get("ADMIN_USERNAME"),
+        'admin_password': config.get("ADMIN_PASSWORD"),
+        'stream_url': config.get("STREAM_URL"),
+        'output_folder': config.get("OUTPUT_FOLDER"),
+        'default_start_date': config.get("DEFAULT_START_DATE"),
+        'default_end_date': config.get("DEFAULT_END_DATE"),
+        'auto_create_show_folders': config.get("AUTO_CREATE_SHOW_FOLDERS"),
+    }
+    
+    return render_template('settings.html', **settings_data)
 
 @main_bp.route('/update_schedule', methods=['POST'])
 @admin_required
