@@ -233,11 +233,3 @@ def clear_all():
 	except Exception as e:
 		flash(f"Error deleting shows: {e}", "danger")
 		return redirect(url_for('main.shows'))
-
-@main_bp.route('/config')
-@admin_required
-def config():
-    """Route to display current configuration for debugging."""
-    
-    config_items = {key: current_app.config[key] for key in current_app.config}
-    return render_template('config.html', config_items=config_items)
