@@ -1,7 +1,7 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import current_app
 from sqlalchemy import inspect
-from datetime import datetime
+from datetime import datetime, time
 from .models import db, Show
 from config import Config
 import logging
@@ -63,6 +63,12 @@ def delete_show(show_id):
 def schedule_recording(show):
 	"""Schedules the recurring recording and deletion of a show."""
 	
+	# Ensure start_time and end_time are datetime.time objects
+	if isinstance(show.start_time, int):
+		show.start_time = time(hour=show.start_time // 100, minute=show.start_time % 100)
+	if isinstance(show.end_time, int):
+		show.end_time = time(hour=show.end_time // 100, minute=show.end_time % 100)
+	
 	start_time = datetime.combine(show.start_date, show.start_time)
 	day_of_week = show.days_of_week
 	duration = (datetime.combine(show.start_date, show.end_time) - start_time).total_seconds()
@@ -84,16 +90,4 @@ def schedule_recording(show):
 		args=[stream_url, duration, output_file],
 		start_date=start_time,
 		end_date=show.end_date,
-		misfire_grace_time=300,
-		replace_existing=True,
-		id=f"record_{show.id}"
-	)
-
-	scheduler.add_job(
-		delete_show, 'date', 
-		run_date=delete_end_time,
-		args=[show.id],
-		misfire_grace_time=600,
-		replace_existing=True,
-		id=f"delete_{show.id}"
 	)
