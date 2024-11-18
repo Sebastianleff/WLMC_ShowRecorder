@@ -72,7 +72,6 @@ def schedule_recording(show):
 	start_time = datetime.combine(show.start_date, show.start_time)
 	day_of_week = show.days_of_week
 	duration = (datetime.combine(show.start_date, show.end_time) - start_time).total_seconds()
-	delete_end_time = datetime.combine(show.end_date, show.end_time)
 	stream_url = current_app.config['STREAM_URL']
 	
 	if current_app.config['AUTO_CREATE_SHOW_FOLDERS']:
