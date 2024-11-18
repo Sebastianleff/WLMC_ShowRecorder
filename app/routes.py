@@ -3,16 +3,11 @@ from .scheduler import refresh_schedule
 from datetime import datetime, time
 from .models import db, Show
 from functools import wraps
-import logging
 import os
 import threading
 
-logging.basicConfig(level=logging.DEBUG)
-
 main_bp = Blueprint('main', __name__)
 config_lock = threading.Lock()
-
-logger = logging.getLogger(__name__)
 
 def admin_required(f):
 	"""Decorator to require admin authentication."""

@@ -4,12 +4,8 @@ from sqlalchemy import inspect
 from datetime import datetime, time, timedelta
 from .models import db, Show
 from config import Config
-import logging
 import ffmpeg
 import os
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 os.makedirs(Config.OUTPUT_FOLDER, exist_ok=True)
 

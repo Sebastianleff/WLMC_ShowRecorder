@@ -1,7 +1,6 @@
 import os
 import secrets
 import threading
-import logging
 from flask import Flask
 from config import Config
 from .models import db
@@ -29,7 +28,6 @@ def create_app(config_class=Config):
     else:
         app.config.from_pyfile(user_config_path, silent=True)
 
-    # Configure logging
     log_dir = os.path.join(app.instance_path, 'logs')
     if not os.path.exists(log_dir):
         os.mkdir(log_dir)
