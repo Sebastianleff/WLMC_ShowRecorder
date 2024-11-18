@@ -215,6 +215,7 @@ def delete_show(id):
 		show = Show.query.get_or_404(id)
 		db.session.delete(show)
 		db.session.commit()
+		refresh_schedule()
 		flash("Show deleted successfully!", "success")
 		return redirect(url_for('main.shows'))
 	except Exception as e:
@@ -229,6 +230,7 @@ def clear_all():
 	try:
 		db.session.query(Show).delete()
 		db.session.commit()
+		refresh_schedule()
 		flash("All shows have been deleted.", "info")
 		return redirect(url_for('main.shows'))
 	except Exception as e:
