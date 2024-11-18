@@ -12,6 +12,7 @@ logging.basicConfig(level=logging.DEBUG)
 main_bp = Blueprint('main', __name__)
 config_lock = threading.Lock()
 
+logger = logging.getLogger(__name__)
 
 def admin_required(f):
 	"""Decorator to require admin authentication."""
@@ -27,14 +28,14 @@ def admin_required(f):
 @main_bp.route('/')
 def index():
 	"""Redirect to the shows page."""
-	
+	logger.debug("Accessed index route")
 	return redirect(url_for('main.shows'))
 
 @main_bp.route('/shows')
 @admin_required
 def shows():
 	"""Render the shows database page with paginated shows."""
-	
+	logger.debug("Accessed shows route")
 	page = request.args.get('page', 1, type=int)
 	shows = Show.query.paginate(page=page, per_page=15)
 	return render_template('shows_database.html', shows=shows)
@@ -42,7 +43,7 @@ def shows():
 @main_bp.route('/login', methods=['GET', 'POST'])
 def login():
 	"""Login route for admin authentication."""
- 
+	logger.debug("Accessed login route")
 	if request.method == 'POST':
 		username = request.form['username']
 		password = request.form['password']
@@ -58,7 +59,7 @@ def login():
 @main_bp.route('/logout')
 def logout():
 	"""Logout route to clear the session."""
- 
+	logger.debug("Accessed logout route")
 	try:
 		session.pop('authenticated', None)
 		#flash("You are now logged out.", "info") removed becouse of index display issue
@@ -71,7 +72,7 @@ def logout():
 @admin_required
 def add_show():
     """Route to add a new show."""
-    
+    logger.debug("Accessed add_show route")
     try:
         if request.method == 'POST':
             start_date = request.form['start_date'] or current_app.config['DEFAULT_START_DATE']
@@ -121,7 +122,7 @@ def add_show():
 @admin_required
 def edit_show(id):
     """Route to edit an existing show."""
- 
+    logger.debug(f"Accessed edit_show route for show ID: {id}")
     show = Show.query.get_or_404(id)
     try:
         if request.method == 'POST':
@@ -150,7 +151,7 @@ def edit_show(id):
 @admin_required
 def settings():
     """Route to update the application settings."""
-    
+    logger.debug("Accessed settings route")
     config_file = os.path.join(current_app.instance_path, 'user_config.py')
 
     if request.method == 'POST':
@@ -196,7 +197,7 @@ def settings():
 @admin_required
 def update_schedule():
 	"""Route to refresh the schedule."""
- 
+	logger.debug("Accessed update_schedule route")
 	try:
 		refresh_schedule()
 		flash("Schedule updated successfully!", "success")
@@ -209,7 +210,7 @@ def update_schedule():
 @admin_required
 def delete_show(id):
 	"""Route to delete a show."""
- 
+	logger.debug(f"Accessed delete_show route for show ID: {id}")
 	try:
 		show = Show.query.get_or_404(id)
 		db.session.delete(show)
@@ -224,7 +225,7 @@ def delete_show(id):
 @admin_required
 def clear_all():
 	"""Route to clear all shows."""
- 
+	logger.debug("Accessed clear_all route")
 	try:
 		db.session.query(Show).delete()
 		db.session.commit()
