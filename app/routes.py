@@ -5,10 +5,13 @@ from .models import db, Show
 from functools import wraps
 import logging
 import os
+import threading
 
 logging.basicConfig(level=logging.DEBUG)
 
 main_bp = Blueprint('main', __name__)
+config_lock = threading.Lock()
+
 
 def admin_required(f):
 	"""Decorator to require admin authentication."""
@@ -165,6 +168,10 @@ def settings():
             with open(config_file, 'w') as f:
                 for key, value in settings.items():
                     f.write(f"{key} = {repr(value)}\n")
+
+            # Reload the configuration in a thread-safe manner
+            with config_lock:
+                current_app.config.from_pyfile(config_file, silent=True)
 
             flash("Settings updated successfully!", "success")
             return redirect(url_for('main.shows'))
