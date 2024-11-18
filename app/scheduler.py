@@ -17,36 +17,30 @@ scheduler = BackgroundScheduler()
 
 def init_scheduler(app):
 	"""Initialize and start the scheduler with the Flask app context."""
-	logger.info("Initializing scheduler")
 	scheduler.start()
 	with app.app_context():
 		refresh_schedule()
-	logger.info("Scheduler started")
 
 def refresh_schedule():
 	"""Refresh the scheduler with the latest shows from the database."""
-	logger.info("Refreshing schedule")
 	inspector = inspect(db.engine)
 	'show' in inspector.get_table_names()
 	scheduler.remove_all_jobs()
 	shows = Show.query.all()
 	for show in shows:
 		schedule_recording(show)
-	logger.info("Schedule refreshed with latest shows")
 
 def record_stream(STREAM_URL, duration, output_file):
 	"""Records the stream using FFmpeg."""
 	output_file = f"{output_file}_{datetime.now().strftime('%m-%d-%y')}_RAWDATA.mp3"
 	try:
-		logger.info(f"Starting recording: {output_file} for {duration} seconds")
 		(
 			ffmpeg
 			.input(STREAM_URL, t=duration)
 			.output(output_file, acodec='copy')
 			.overwrite_output()
 			.run()
-		)
-		logger.info(f"Recording saved as {output_file}")
+			)
 	except ffmpeg._run.Error as e:
 		logger.error(f"Recording error: {e.stderr.decode()}")
 
@@ -57,7 +51,6 @@ def delete_show(show_id):
 		if show:
 			db.session.delete(show)
 			db.session.commit()
-			logger.info(f"Show {show_id} deleted.")
 
 def schedule_recording(show):
     """Schedules the recurring recording and deletion of a show."""
@@ -70,7 +63,6 @@ def schedule_recording(show):
     start_time = datetime.combine(show.start_date, show.start_time)
     end_time = datetime.combine(show.start_date, show.end_time)
     
-    # Handle midnight as the end time
     if show.end_time == time(0, 0):
         end_time += timedelta(days=1)
     
