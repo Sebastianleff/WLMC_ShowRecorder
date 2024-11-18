@@ -1,7 +1,7 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import current_app
 from sqlalchemy import inspect
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from .models import db, Show
 from config import Config
 import logging
@@ -61,31 +61,35 @@ def delete_show(show_id):
 			logger.info(f"Show {show_id} deleted.")
 
 def schedule_recording(show):
-	"""Schedules the recurring recording and deletion of a show."""
-	
-	if isinstance(show.start_time, int):
-		show.start_time = time(hour=show.start_time // 100, minute=show.start_time % 100)
-	if isinstance(show.end_time, int):
-		show.end_time = time(hour=show.end_time // 100, minute=show.end_time % 100)
-	
-	start_time = datetime.combine(show.start_date, show.start_time)
-	day_of_week = show.days_of_week
-	duration = (datetime.combine(show.start_date, show.end_time) - start_time).total_seconds()
-	stream_url = current_app.config['STREAM_URL']
-	
-	if current_app.config['AUTO_CREATE_SHOW_FOLDERS']:
-		show_folder = os.path.join(current_app.config['OUTPUT_FOLDER'], f"{show.host_first_name}_{show.host_last_name}")
-		if not os.path.exists(show_folder):
-			os.mkdir(show_folder)
-	else:
-		show_folder = current_app.config['OUTPUT_FOLDER']
-	
-	output_file = os.path.join(show_folder, f"{show.host_first_name}_{show.host_last_name}")
+    """Schedules the recurring recording and deletion of a show."""
+    
+    if isinstance(show.start_time, int):
+        show.start_time = time(hour=show.start_time // 100, minute=show.start_time % 100)
+    if isinstance(show.end_time, int):
+        show.end_time = time(hour=show.end_time // 100, minute=show.end_time % 100)
+    
+    start_time = datetime.combine(show.start_date, show.start_time)
+    end_time = datetime.combine(show.start_date, show.end_time)
+    
+    if show.end_time == time(0, 0):
+        end_time += timedelta(days=1)
+    
+    duration = (end_time - start_time).total_seconds()
+    stream_url = current_app.config['STREAM_URL']
+    
+    if current_app.config['AUTO_CREATE_SHOW_FOLDERS']:
+        show_folder = os.path.join(current_app.config['OUTPUT_FOLDER'], f"{show.host_first_name}_{show.host_last_name}")
+        if not os.path.exists(show_folder):
+            os.mkdir(show_folder)
+    else:
+        show_folder = current_app.config['OUTPUT_FOLDER']
+    
+    output_file = os.path.join(show_folder, f"{show.host_first_name}_{show.host_last_name}")
 
-	scheduler.add_job(
-		record_stream, 'cron',
-		day_of_week=day_of_week, hour=show.start_time.hour, minute=show.start_time.minute,
-		args=[stream_url, duration, output_file],
-		start_date=start_time,
-		end_date=show.end_date,
-	)
+    scheduler.add_job(
+        record_stream, 'cron',
+        day_of_week=show.days_of_week, hour=show.start_time.hour, minute=show.start_time.minute,
+        args=[stream_url, duration, output_file],
+        start_date=start_time,
+        end_date=show.end_date,
+    )
