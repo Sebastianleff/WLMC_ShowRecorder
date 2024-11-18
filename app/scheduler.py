@@ -47,6 +47,7 @@ def delete_show(show_id):
 		if show:
 			db.session.delete(show)
 			db.session.commit()
+	refresh_schedule()
 
 def schedule_recording(show):
 	"""Schedules the recurring recording and deletion of a show."""
@@ -80,4 +81,10 @@ def schedule_recording(show):
 		args=[stream_url, duration, output_file],
 		start_date=start_time,
 		end_date=show.end_date,
+	)
+ 
+	scheduler.add_job(
+		delete_show, 'date',
+		run_date=show.end_date + timedelta(days=1),
+		args=[show.id]
 	)
