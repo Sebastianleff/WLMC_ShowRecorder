@@ -169,7 +169,6 @@ def settings():
                 for key, value in settings.items():
                     f.write(f"{key} = {repr(value)}\n")
 
-            # Reload the configuration in a thread-safe manner
             with config_lock:
                 current_app.config.from_pyfile(config_file, silent=True)
 
