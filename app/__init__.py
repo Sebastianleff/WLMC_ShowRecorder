@@ -1,6 +1,7 @@
 import os
 import secrets
 import threading
+import logging
 from flask import Flask
 from config import Config
 from .models import db
@@ -10,6 +11,9 @@ from flask_migrate import Migrate
 config_lock = threading.Lock()
 
 def create_app(config_class=Config):
+    logger = logging.getLogger(__name__)
+    logger.info("Creating Flask application")
+    
     app = Flask(__name__)
     app.config.from_object(config_class)
     
@@ -28,6 +32,7 @@ def create_app(config_class=Config):
     else:
         app.config.from_pyfile(user_config_path, silent=True)
 
+    logger.info("Initializing database")
     db.init_app(app)
     Migrate(app, db)
 
@@ -42,9 +47,11 @@ def create_app(config_class=Config):
         except Exception as e:
             print(f"Error applying migrations: {e}")
     
+        logger.info("Initializing scheduler")
         init_scheduler(app)
     
     from .routes import main_bp
     app.register_blueprint(main_bp)
 
+    logger.info("Application created successfully")
     return app
