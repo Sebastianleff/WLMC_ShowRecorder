@@ -13,12 +13,14 @@ scheduler = BackgroundScheduler()
 
 def init_scheduler(app):
 	"""Initialize and start the scheduler with the Flask app context."""
+ 
 	scheduler.start()
 	with app.app_context():
 		refresh_schedule()
 
 def refresh_schedule():
 	"""Refresh the scheduler with the latest shows from the database."""
+ 
 	inspector = inspect(db.engine)
 	'show' in inspector.get_table_names()
 	scheduler.remove_all_jobs()
@@ -42,6 +44,7 @@ def record_stream(STREAM_URL, duration, output_file):
 
 def delete_show(show_id):
 	"""Delete a show from the database after its last airing."""
+ 
 	with db.app_context():
 		show = Show.query.get(show_id)
 		if show:

@@ -23,12 +23,14 @@ def admin_required(f):
 @main_bp.route('/')
 def index():
 	"""Redirect to the shows page."""
+ 
 	return redirect(url_for('main.shows'))
 
 @main_bp.route('/shows')
 @admin_required
 def shows():
 	"""Render the shows database page with paginated shows."""
+ 
 	page = request.args.get('page', 1, type=int)
 	shows = Show.query.paginate(page=page, per_page=15)
 	return render_template('shows_database.html', shows=shows)
@@ -36,6 +38,7 @@ def shows():
 @main_bp.route('/login', methods=['GET', 'POST'])
 def login():
 	"""Login route for admin authentication."""
+ 
 	if request.method == 'POST':
 		username = request.form['username']
 		password = request.form['password']
@@ -51,6 +54,7 @@ def login():
 @main_bp.route('/logout')
 def logout():
 	"""Logout route to clear the session."""
+ 
 	try:
 		session.pop('authenticated', None)
 		flash("You have successfully logged out.", "success")
@@ -63,6 +67,7 @@ def logout():
 @admin_required
 def add_show():
 	"""Route to add a new show."""
+ 
 	try:
 		if request.method == 'POST':
 			start_date = request.form['start_date'] or current_app.config['DEFAULT_START_DATE']
@@ -112,6 +117,7 @@ def add_show():
 @admin_required
 def edit_show(id):
 	"""Route to edit an existing show."""
+ 
 	show = Show.query.get_or_404(id)
 	try:
 		if request.method == 'POST':
@@ -140,6 +146,7 @@ def edit_show(id):
 @admin_required
 def settings():
 	"""Route to update the application settings."""
+ 
 	config_file = os.path.join(current_app.instance_path, 'user_config.py')
 
 	if request.method == 'POST':
@@ -185,6 +192,7 @@ def settings():
 @admin_required
 def update_schedule():
 	"""Route to refresh the schedule."""
+ 
 	try:
 		refresh_schedule()
 		flash("Schedule updated successfully!", "success")
@@ -212,6 +220,7 @@ def delete_show(id):
 @admin_required
 def clear_all():
 	"""Route to clear all shows."""
+ 
 	try:
 		db.session.query(Show).delete()
 		db.session.commit()
