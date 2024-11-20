@@ -36,11 +36,9 @@ def create_app(config_class=Config):
         migrations_dir = os.path.join(app.instance_path, 'migrations')
         if not os.path.exists(migrations_dir):
             init(directory=migrations_dir)
-        try:
             migrate(message="Initial migration", directory=migrations_dir)
             upgrade(directory=migrations_dir)
-        except Exception as e:
-            app.logger.error(f"Error applying migrations: {e}")
+
     
         init_scheduler(app)
     

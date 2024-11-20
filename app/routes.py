@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from .scheduler import refresh_schedule
 from datetime import datetime, time
 from .models import db, Show
+from sqlalchemy import case
 from functools import wraps
 import os
 import threading
@@ -30,13 +31,29 @@ def index():
 @admin_required
 def shows():
 	"""Render the shows database page with paginated shows."""
- 
+
+	day_order = case(
+		(Show.days_of_week == 'mon', 1),
+		(Show.days_of_week == 'tue', 2),
+		(Show.days_of_week == 'wed', 3),
+		(Show.days_of_week == 'thu', 4),
+		(Show.days_of_week == 'fri', 5),
+		(Show.days_of_week == 'sat', 6),
+		(Show.days_of_week == 'sun', 7)
+	)
+	
 	page = request.args.get('page', 1, type=int)
-	shows = Show.query.paginate(page=page, per_page=15)
+	shows = Show.query.order_by(
+		day_order,
+		Show.start_time,
+		Show.start_date
+	).paginate(page=page, per_page=15)
+
 	return render_template('shows_database.html', shows=shows)
 
 @main_bp.route('/login', methods=['GET', 'POST'])
 def login():
+	
 	"""Login route for admin authentication."""
  
 	if request.method == 'POST':
