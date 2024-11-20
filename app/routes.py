@@ -30,7 +30,7 @@ def index():
 @main_bp.route('/shows')
 @admin_required
 def shows():
-	"""Render the shows database page with paginated shows."""
+	"""Render the shows database page sorted and paginated."""
 
 	day_order = case(
 		(Show.days_of_week == 'mon', 1),
