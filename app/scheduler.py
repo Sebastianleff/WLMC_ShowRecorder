@@ -14,9 +14,10 @@ scheduler = BackgroundScheduler()
 def init_scheduler(app):
 	"""Initialize and start the scheduler with the Flask app context."""
  
-	scheduler.start()
-	with app.app_context():
-		refresh_schedule()
+	if not scheduler.running:
+		scheduler.start()
+		with app.app_context():
+			refresh_schedule()
 
 def refresh_schedule():
 	"""Refresh the scheduler with the latest shows from the database."""
