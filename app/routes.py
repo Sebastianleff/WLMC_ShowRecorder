@@ -168,6 +168,7 @@ def settings():
 
 	if request.method == 'POST':
 		try:
+   
 			settings = {
 				'ADMIN_USERNAME': request.form['admin_username'],
 				'ADMIN_PASSWORD': request.form['admin_password'],
