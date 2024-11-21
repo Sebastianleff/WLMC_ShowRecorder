@@ -56,11 +56,6 @@ def delete_show(show_id):
 def schedule_recording(show):
 	"""Schedules the recurring recording and deletion of a show."""
 	
-	if isinstance(show.start_time, int):
-		show.start_time = time(hour=show.start_time // 100, minute=show.start_time % 100)
-	if isinstance(show.end_time, int):
-		show.end_time = time(hour=show.end_time // 100, minute=show.end_time % 100)
-	
 	start_time = datetime.combine(show.start_date, show.start_time)
 	end_time = datetime.combine(show.start_date, show.end_time)
 	
