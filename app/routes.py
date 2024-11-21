@@ -16,6 +16,7 @@ def admin_required(f):
 	@wraps(f)
 	def decorated_function(*args, **kwargs):
 		if not session.get('authenticated'):
+			current_app.logger.warning("Unauthorized access attempt.")
 			flash("Please log in to access this page.", "danger")
 			return redirect(url_for('main.login'))
 		return f(*args, **kwargs)
@@ -25,6 +26,7 @@ def admin_required(f):
 def index():
 	"""Redirect to the shows page."""
  
+	current_app.logger.info("Redirecting to shows page.")
 	return redirect(url_for('main.shows'))
 
 @main_bp.route('/shows')
@@ -49,6 +51,7 @@ def shows():
 		Show.start_date
 	).paginate(page=page, per_page=15)
 
+	current_app.logger.info("Rendering shows database page.")
 	return render_template('shows_database.html', shows=shows)
 
 @main_bp.route('/login', methods=['GET', 'POST'])
@@ -62,9 +65,11 @@ def login():
 		if (username == current_app.config['ADMIN_USERNAME'] and
 				password == current_app.config['ADMIN_PASSWORD']):
 			session['authenticated'] = True
+			current_app.logger.info("Admin logged in successfully.")
 			flash("You are now logged in.", "success")
 			return redirect(url_for('main.shows'))
 		else:
+			current_app.logger.warning("Invalid login attempt.")
 			flash("Invalid credentials. Please try again.", "danger")
 	return render_template('login.html')
 
@@ -74,9 +79,11 @@ def logout():
  
 	try:
 		session.pop('authenticated', None)
+		current_app.logger.info("Admin logged out successfully.")
 		flash("You have successfully logged out.", "success")
 		return redirect(url_for('main.index'))
 	except Exception as e:
+		current_app.logger.error(f"Error logging out: {e}")
 		flash(f"Error logging out: {e}", "danger")
 		return redirect(url_for('main.shows'))
 
@@ -122,11 +129,13 @@ def add_show():
 			db.session.add(show)
 			db.session.commit()
 			refresh_schedule()
+			current_app.logger.info("Show added successfully.")
 			flash("Show added successfully!", "success")
 			return redirect(url_for('main.shows'))
 		
 		return render_template('add_show.html')
 	except Exception as e:
+		current_app.logger.error(f"Error adding show: {e}")
 		flash(f"Error adding show: {e}", "danger")
 		return redirect(url_for('main.shows'))
 
@@ -150,12 +159,14 @@ def edit_show(id):
 	
 			db.session.commit()
 			refresh_schedule()
+			current_app.logger.info("Show updated successfully.")
 			flash("Show updated successfully!", "success")
 
 			return redirect(url_for('main.shows'))
 
 		return render_template('edit_show.html', show=show)
 	except Exception as e:
+		current_app.logger.error(f"Error editing show: {e}")
 		flash(f"Error editing show: {e}", "danger")
 		return redirect(url_for('main.shows'))
 
@@ -186,10 +197,12 @@ def settings():
 			with config_lock:
 				current_app.config.from_pyfile(config_file, silent=True)
 
+			current_app.logger.info("Settings updated successfully.")
 			flash("Settings updated successfully!", "success")
 			return redirect(url_for('main.shows'))
 			
 		except Exception as e:
+			current_app.logger.error(f"An error occurred while updating settings: {str(e)}")
 			flash(f"An error occurred while updating settings: {str(e)}", "danger")
 			return redirect(url_for('main.settings'))
 
@@ -213,9 +226,11 @@ def update_schedule():
  
 	try:
 		refresh_schedule()
+		current_app.logger.info("Schedule updated successfully.")
 		flash("Schedule updated successfully!", "success")
 		return redirect(url_for('main.shows'))
 	except Exception as e:
+		current_app.logger.error(f"Error updating schedule: {e}")
 		flash(f"Error updating schedule: {e}", "danger")
 		return redirect(url_for('main.shows'))
 
@@ -228,9 +243,11 @@ def delete_show(id):
 		db.session.delete(show)
 		db.session.commit()
 		refresh_schedule()
+		current_app.logger.info("Show deleted successfully.")
 		flash("Show deleted successfully!", "success")
 		return redirect(url_for('main.shows'))
 	except Exception as e:
+		current_app.logger.error(f"Error deleting show: {e}")
 		flash(f"Error deleting show: {e}", "danger")
 		return redirect(url_for('main.shows'))
 
@@ -243,8 +260,10 @@ def clear_all():
 		db.session.query(Show).delete()
 		db.session.commit()
 		refresh_schedule()
+		current_app.logger.info("All shows have been deleted.")
 		flash("All shows have been deleted.", "info")
 		return redirect(url_for('main.shows'))
 	except Exception as e:
+		current_app.logger.error(f"Error deleting shows: {e}")
 		flash(f"Error deleting shows: {e}", "danger")
 		return redirect(url_for('main.shows'))

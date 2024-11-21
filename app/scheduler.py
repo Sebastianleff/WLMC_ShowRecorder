@@ -17,21 +17,27 @@ def init_scheduler(app):
 	if not scheduler.running:
 		scheduler.start()
 		with app.app_context():
+			current_app.logger.info("Scheduler initialized and started.")
 			refresh_schedule()
 
 def refresh_schedule():
 	"""Refresh the scheduler with the latest shows from the database."""
  
-	inspector = inspect(db.engine)
-	'show' in inspector.get_table_names()
-	scheduler.remove_all_jobs()
-	shows = Show.query.all()
-	for show in shows:
-		schedule_recording(show)
+	try:
+		inspector = inspect(db.engine)
+		'show' in inspector.get_table_names()
+		scheduler.remove_all_jobs()
+		shows = Show.query.all()
+		for show in shows:
+			schedule_recording(show)
+		current_app.logger.info("Schedule refreshed with latest shows.")
+	except Exception as e:
+		current_app.logger.error(f"Error refreshing schedule: {e}")
 
 def record_stream(STREAM_URL, duration, output_file):
 	"""Records the stream using FFmpeg."""
 	output_file = f"{output_file}_{datetime.now().strftime('%m-%d-%y')}_RAWDATA.mp3"
+	start_time = datetime.now().strftime('%H-%M-%S')
 	try:
 		(
 			ffmpeg
@@ -40,18 +46,24 @@ def record_stream(STREAM_URL, duration, output_file):
 			.overwrite_output()
 			.run()
 		)
+		current_app.logger.info(f"Recording started for {output_file}.")
+		current_app.logger.info(f"Start time:{start_time}.")
 	except ffmpeg._run.Error as e:
 		current_app.logger.error(f"FFmpeg error: {e.stderr.decode()}")
 
 def delete_show(show_id):
 	"""Delete a show from the database after its last airing."""
  
-	with db.app_context():
-		show = Show.query.get(show_id)
-		if show:
-			db.session.delete(show)
-			db.session.commit()
-	refresh_schedule()
+	try:
+		with db.app_context():
+			show = Show.query.get(show_id)
+			if show:
+				db.session.delete(show)
+				db.session.commit()
+		current_app.logger.info(f"Show with ID {show_id} deleted after last airing.")
+		refresh_schedule()
+	except Exception as e:
+		current_app.logger.error(f"Error deleting show {show_id}: {e}")
 
 def schedule_recording(show):
 	"""Schedules the recurring recording and deletion of a show."""
@@ -74,16 +86,22 @@ def schedule_recording(show):
 	
 	output_file = os.path.join(show_folder, f"{show.host_first_name}_{show.host_last_name}")
 
-	scheduler.add_job(
-		record_stream, 'cron',
-		day_of_week=show.days_of_week, hour=show.start_time.hour, minute=show.start_time.minute,
-		args=[stream_url, duration, output_file],
-		start_date=start_time,
-		end_date=show.end_date,
-	)
- 
-	scheduler.add_job(
-		delete_show, 'date',
-		run_date=show.end_date + timedelta(days=1),
-		args=[show.id]
-	)
+	try:
+		scheduler.add_job(
+			record_stream, 'cron',
+			day_of_week=show.days_of_week, hour=show.start_time.hour, minute=show.start_time.minute,
+			args=[stream_url, duration, output_file],
+			start_date=start_time,
+			end_date=show.end_date,
+		)
+		current_app.logger.info(f"Recording scheduled for show {show.id}.")
+
+		scheduler.add_job(
+			delete_show, 'date',
+			run_date=show.end_date + timedelta(days=1),
+			args=[show.id]
+		)
+		current_app.logger.info(f"Deletion scheduled for show {show.id} after last airing.")
+	except Exception as e:
+		current_app.logger.error(f"Error scheduling recording for show {show.id}: {e}")
+
