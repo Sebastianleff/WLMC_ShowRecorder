@@ -24,11 +24,11 @@ def create_app(config_class=Config):
     if not os.path.exists(logs_dir):
         os.mkdir(logs_dir)
     
-    logging.basicConfig(level=logging.INFO)
-    handler = RotatingFileHandler(log_file_path, maxBytes=1024*1024*5, backupCount=5)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    app.logger.addHandler(handler)
+    if not any(isinstance(handler, RotatingFileHandler) for handler in app.logger.handlers):
+        handler = RotatingFileHandler(log_file_path, maxBytes=1024*1024*5, backupCount=5)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        app.logger.addHandler(handler)
     
 
     if not os.path.exists(user_config_path):
