@@ -31,7 +31,17 @@
 {% endwith %}
 
 <div class="container mt-5">
-    <h2>Settings</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Settings</h2>
+        <div>
+            <a href="{{ url_for('TEMP') }}" class="btn btn-secondary me-2" aria-label="Update App">
+                <i class="bi bi-arrow-repeat"></i> Update App
+            </a>
+            <a href="{{ url_for('main.index') }}" class="btn btn-secondary" aria-label="Pause Recordings">
+                <i class="bi bi-pause-circle"></i> Pause Recordings
+            </a>
+        </div>
+    </div>
     <form method="post">
         <!-- Admin Username Field -->
         <div class="mb-3">
@@ -97,8 +107,12 @@
                 <input type="checkbox" name="auto_create_show_folders" id="auto_create_show_folders" class="form-check-input" {% if auto_create_show_folders %}checked{% endif %}>
             </label>
         </div>
-        <button type="submit" class="btn btn-primary">Save Settings</button>
-        <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-save"></i> Save Settings
+        </button>
+        <a href="{{ url_for('main.index') }}" class="btn btn-secondary">
+            <i class="bi bi-x-circle"></i> Cancel
+        </a>
     </form>
 </div>
 
