@@ -43,7 +43,7 @@ def shows():
 		(Show.days_of_week == 'sat', 6),
 		(Show.days_of_week == 'sun', 7)
 	)
-	
+
 	page = request.args.get('page', 1, type=int)
 	shows = Show.query.order_by(
 		day_order,

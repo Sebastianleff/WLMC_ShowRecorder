@@ -78,7 +78,7 @@ def schedule_recording(show):
 	stream_url = current_app.config['STREAM_URL']
 	
 	if current_app.config['AUTO_CREATE_SHOW_FOLDERS']:
-		show_folder = os.path.join(current_app.config['OUTPUT_FOLDER'], f"{show.host_first_name}_{show.host_last_name}")
+		show_folder = os.path.join(current_app.config['OUTPUT_FOLDER'], f"{show.host_first_name} {show.host_last_name}")
 		if not os.path.exists(show_folder):
 			os.mkdir(show_folder)
 	else:
