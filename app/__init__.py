@@ -29,7 +29,9 @@ def create_app(config_class=Config):
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         handler.setFormatter(formatter)
         app.logger.addHandler(handler)
-    
+
+    app.logger.setLevel(logging.INFO)
+    app.logger.propagate = False
 
     if not os.path.exists(user_config_path):
         try:
@@ -66,5 +68,7 @@ def create_app(config_class=Config):
     
     from .routes import main_bp
     app.register_blueprint(main_bp)
+    
+    app.logger.info("Application startup complete.")
 
     return app

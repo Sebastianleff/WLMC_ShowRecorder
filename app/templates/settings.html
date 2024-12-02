@@ -30,16 +30,48 @@
     {% endif %}
 {% endwith %}
 
+<!-- Pause Modal -->
+<div class="modal fade" id="pauseModal" tabindex="-1" aria-labelledby="pauseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="pauseModalLabel">Pause Confirmation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="pauseForm" method="POST" action="{{ url_for('main.pause') }}">
+                    <div class="mb-3">
+                        <label for="pause_end_date" class="form-label">End Date for Pausing (optional)</label>
+                        <input type="date" name="pause_end_date" id="pause_end_date" class="form-control">
+                    </div>
+                    <p>Are you sure you want to pause the application?</p>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="pauseForm" class="btn btn-warning">Confirm Pause</button>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Settings</h2>
         <div>
-            <a href="{{ url_for('TEMP') }}" class="btn btn-secondary me-2" aria-label="Update App">
+            <a href="{{ url_for('main.index') }}" class="btn btn-secondary me-2" aria-label="Update App">
                 <i class="bi bi-arrow-repeat"></i> Update App
             </a>
-            <a href="{{ url_for('main.index') }}" class="btn btn-secondary" aria-label="Pause Recordings">
-                <i class="bi bi-pause-circle"></i> Pause Recordings
-            </a>
+            {% if config.PAUSE_SHOWS_RECORDING %}
+                <form action="{{ url_for('main.resume') }}" method="POST" style="display:inline;">
+                    <button type="submit" class="btn btn-secondary" aria-label="Resume Recordings">
+                        <i class="bi bi-play-circle"></i> Resume Recordings
+                    </button>
+                </form>
+            {% else %}
+                <a href="#" class="btn btn-secondary" aria-label="Pause Recordings" data-bs-toggle="modal" data-bs-target="#pauseModal">
+                    <i class="bi bi-pause-circle"></i> Pause Recordings
+                </a>
+            {% endif %}
         </div>
     </div>
     <form method="post">

@@ -1,15 +1,27 @@
 from apscheduler.schedulers.background import BackgroundScheduler
-from flask import current_app
-from sqlalchemy import inspect
+from apscheduler.jobstores.memory import MemoryJobStore
 from datetime import datetime, time, timedelta
+from sqlalchemy import inspect
+from flask import current_app
 from .models import db, Show
+from threading import Lock
 from config import Config
 import ffmpeg
 import os
 
+config_lock = Lock()
 os.makedirs(Config.OUTPUT_FOLDER, exist_ok=True)
 
 scheduler = BackgroundScheduler()
+
+def set_pause_flag_false():
+	"""Set the pause flag to False to resume recordings."""
+ 
+	config_file = os.path.join(current_app.instance_path, 'user_config.py')
+	with open(config_file, 'a') as f:
+		f.write("PAUSE_SHOWS_RECORDING = False\n")
+	with config_lock:
+		current_app.config.from_pyfile(config_file, silent=True)
 
 def init_scheduler(app):
 	"""Initialize and start the scheduler with the Flask app context."""
@@ -34,8 +46,26 @@ def refresh_schedule():
 	except Exception as e:
 		current_app.logger.error(f"Error refreshing schedule: {e}")
 
+def pause_shows_until(date):
+	"""Pause all recordings until a specified date."""
+	if date is None:
+		return
+	try:
+		scheduler.add_job(
+			set_pause_flag_false, 'date',
+			run_date=date
+		)
+		current_app.logger.info(f"Recordings resume job added.")
+	except Exception as e:
+		current_app.logger.error(f"Error adding resume jobs: {e}")
+
 def record_stream(STREAM_URL, duration, output_file):
 	"""Records the stream using FFmpeg."""
+
+	if current_app.config['PAUSE_SHOWS_RECORDING'] is True:
+		current_app.logger.info("Recordings paused.")
+		return
+
 	output_file = f"{output_file}_{datetime.now().strftime('%m-%d-%y')}_RAWDATA.mp3"
 	start_time = datetime.now().strftime('%H-%M-%S')
 	try:
@@ -48,7 +78,7 @@ def record_stream(STREAM_URL, duration, output_file):
 		)
 		current_app.logger.info(f"Recording started for {output_file}.")
 		current_app.logger.info(f"Start time:{start_time}.")
-	except ffmpeg._run.Error as e:
+	except ffmpeg.Error as e:
 		current_app.logger.error(f"FFmpeg error: {e.stderr.decode()}")
 
 def delete_show(show_id):
@@ -70,6 +100,9 @@ def schedule_recording(show):
 	
 	start_time = datetime.combine(show.start_date, show.start_time)
 	end_time = datetime.combine(show.start_date, show.end_time)
+
+	pausable_job_store = MemoryJobStore()
+	scheduler.add_jobstore(pausable_job_store, 'pausable')
 	
 	if show.end_time == time(0, 0):
 		end_time += timedelta(days=1)

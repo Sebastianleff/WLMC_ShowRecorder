@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
-from .scheduler import refresh_schedule
+from .scheduler import refresh_schedule, pause_shows_until
 from datetime import datetime, time
 from .models import db, Show
 from sqlalchemy import case
@@ -267,3 +267,48 @@ def clear_all():
 		current_app.logger.error(f"Error deleting shows: {e}")
 		flash(f"Error deleting shows: {e}", "danger")
 		return redirect(url_for('main.shows'))
+
+@main_bp.route('/pause', methods=['POST'])
+@admin_required
+def pause():
+	"""Pause the recordings until the specified end date."""
+	try:
+		pause_end_date = request.form.get('pause_end_date')
+		if pause_end_date:
+			pause_end_date = datetime.strptime(pause_end_date, '%Y-%m-%d')
+		else:
+			pause_end_date = None
+
+		pause_shows_until(pause_end_date)
+
+		config_file = os.path.join(current_app.instance_path, 'user_config.py')
+		with open(config_file, 'a') as f:
+			f.write("PAUSE_SHOWS_RECORDING = True\n")
+		with config_lock:
+			current_app.config.from_pyfile(config_file, silent=True)
+
+		flash(f"Recordings paused{' until ' + pause_end_date.strftime('%Y-%m-%d') if pause_end_date else ' indefinitely'}.", "warning")
+		current_app.logger.info(f"Recordings paused{' until ' + pause_end_date.strftime('%Y-%m-%d') if pause_end_date else ' indefinitely'}.")
+  
+	except Exception as e:
+		current_app.logger.error(f"Error pausing recordings: {e}")
+		flash(f"Error pausing recordings: {e}", "danger")
+	return redirect(url_for('main.settings'))
+
+@main_bp.route('/resume', methods=['POST'])
+@admin_required
+def resume():
+	"""Resume the recordings."""
+	try:
+		config_file = os.path.join(current_app.instance_path, 'user_config.py')
+		with open(config_file, 'a') as f:
+			f.write("PAUSE_SHOWS_RECORDING = False\n")
+		with config_lock:
+			current_app.config.from_pyfile(config_file, silent=True)
+		flash("Recordings resumed.", "success")
+		current_app.logger.info("Recordings resumed.")
+  
+	except Exception as e:
+		current_app.logger.error(f"Error resuming recordings: {e}")
+		flash(f"Error resuming recordings: {e}", "danger")
+	return redirect(url_for('main.settings'))
