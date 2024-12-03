@@ -10,3 +10,5 @@ migrations/
 instance/
 .DS_Store
 test files/
+.idea/
+.gitignore
