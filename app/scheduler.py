@@ -1,5 +1,4 @@
 from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.jobstores.memory import MemoryJobStore
 from datetime import datetime, time, timedelta
 from sqlalchemy import inspect
 from flask import current_app
@@ -99,9 +98,6 @@ def schedule_recording(show):
 	
 	start_time = datetime.combine(show.start_date, show.start_time)
 	end_time = datetime.combine(show.start_date, show.end_time)
-
-	pausable_job_store = MemoryJobStore()
-	scheduler.add_jobstore(pausable_job_store, 'pausable')
 	
 	if show.end_time == time(0, 0):
 		end_time += timedelta(days=1)
