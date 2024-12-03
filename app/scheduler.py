@@ -48,8 +48,7 @@ def refresh_schedule():
 
 def pause_shows_until(date):
 	"""Pause all recordings until a specified date."""
-	if date is None:
-		return
+ 
 	try:
 		scheduler.add_job(
 			set_pause_flag_false, 'date',

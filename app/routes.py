@@ -271,15 +271,13 @@ def clear_all():
 @main_bp.route('/pause', methods=['POST'])
 @admin_required
 def pause():
-	"""Pause the recordings until the specified end date."""
+	"""Pause the recordings until the specified end date or indefinitely."""
+ 
 	try:
 		pause_end_date = request.form.get('pause_end_date')
 		if pause_end_date:
 			pause_end_date = datetime.strptime(pause_end_date, '%Y-%m-%d')
-		else:
-			pause_end_date = None
-
-		pause_shows_until(pause_end_date)
+			pause_shows_until(pause_end_date)
 
 		config_file = os.path.join(current_app.instance_path, 'user_config.py')
 		with open(config_file, 'a') as f:
@@ -287,18 +285,19 @@ def pause():
 		with config_lock:
 			current_app.config.from_pyfile(config_file, silent=True)
 
-		flash(f"Recordings paused{' until ' + pause_end_date.strftime('%Y-%m-%d') if pause_end_date else ' indefinitely'}.", "warning")
-		current_app.logger.info(f"Recordings paused{' until ' + pause_end_date.strftime('%Y-%m-%d') if pause_end_date else ' indefinitely'}.")
-  
+		flash(f"Recordings paused{' until ' + pause_end_date.strftime('%d-%m-%y') if pause_end_date else ' indefinitely'}.", "warning")
+		current_app.logger.info(f"Recordings paused{' until ' + pause_end_date.strftime('%d-%m-%y') if pause_end_date else ' indefinitely'}.")
 	except Exception as e:
 		current_app.logger.error(f"Error pausing recordings: {e}")
 		flash(f"Error pausing recordings: {e}", "danger")
+  
 	return redirect(url_for('main.settings'))
 
 @main_bp.route('/resume', methods=['POST'])
 @admin_required
 def resume():
 	"""Resume the recordings."""
+ 
 	try:
 		config_file = os.path.join(current_app.instance_path, 'user_config.py')
 		with open(config_file, 'a') as f:
@@ -307,8 +306,8 @@ def resume():
 			current_app.config.from_pyfile(config_file, silent=True)
 		flash("Recordings resumed.", "success")
 		current_app.logger.info("Recordings resumed.")
-  
 	except Exception as e:
 		current_app.logger.error(f"Error resuming recordings: {e}")
 		flash(f"Error resuming recordings: {e}", "danger")
+  
 	return redirect(url_for('main.settings'))
