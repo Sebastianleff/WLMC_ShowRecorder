@@ -57,7 +57,7 @@ def pause_shows_until(date):
 	except Exception as e:
 		current_app.logger.error(f"Error adding resume jobs: {e}")
 
-def record_stream(STREAM_URL, duration, output_file):
+def record_stream(stream_url, duration, output_file):
 	"""Records the stream using FFmpeg."""
 
 	if current_app.config['PAUSE_SHOWS_RECORDING'] is True:
@@ -69,7 +69,7 @@ def record_stream(STREAM_URL, duration, output_file):
 	try:
 		(
 			ffmpeg
-			.input(STREAM_URL, t=duration)
+			.input(stream_url, t=duration)
 			.output(output_file, acodec='copy')
 			.overwrite_output()
 			.run()
