@@ -32,18 +32,15 @@ def init_scheduler(app):
 			refresh_schedule()
 
 def refresh_schedule():
-	"""Refresh the scheduler with the latest shows from the database."""
- 
-	try:
-		inspector = inspect(db.engine)
-		'show' in inspector.get_table_names()
-		scheduler.remove_all_jobs()
-		shows = Show.query.all()
-		for show in shows:
-			schedule_recording(show)
-		current_app.logger.info("Schedule refreshed with latest shows.")
-	except Exception as e:
-		current_app.logger.error(f"Error refreshing schedule: {e}")
+    """Refresh the scheduler with the latest shows from the database."""
+    try:
+        if 'show' in inspect(db.engine).get_table_names():
+            scheduler.remove_all_jobs()
+            for show in Show.query.all():
+                schedule_recording(show)
+            current_app.logger.info("Schedule refreshed with latest shows.")
+    except Exception as e:
+        current_app.logger.error(f"Error refreshing schedule: {e}")
 
 def pause_shows_until(date):
 	"""Pause all recordings until a specified date."""
