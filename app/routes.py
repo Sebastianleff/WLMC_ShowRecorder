@@ -29,6 +29,8 @@ def index():
 	current_app.logger.info("Redirecting to shows page.")
 	return redirect(url_for('main.shows'))
 
+
+# noinspection PyTypeChecker
 @main_bp.route('/shows')
 @admin_required
 def shows():
@@ -45,18 +47,17 @@ def shows():
 	)
 
 	page = request.args.get('page', 1, type=int)
-	shows = Show.query.order_by(
+	shows_column = Show.query.order_by(
 		day_order,
 		Show.start_time,
 		Show.start_date
 	).paginate(page=page, per_page=15)
 
 	current_app.logger.info("Rendering shows database page.")
-	return render_template('shows_database.html', shows=shows)
+	return render_template('shows_database.html', shows=shows_column)
 
 @main_bp.route('/login', methods=['GET', 'POST'])
 def login():
-	
 	"""Login route for admin authentication."""
  
 	if request.method == 'POST':
@@ -170,6 +171,8 @@ def edit_show(id):
 		flash(f"Error editing show: {e}", "danger")
 		return redirect(url_for('main.shows'))
 
+#TODO: Implement better way to handle settings and user configuration
+# noinspection PyShadowingNames
 @main_bp.route('/settings', methods=['GET', 'POST'])
 @admin_required
 def settings():
