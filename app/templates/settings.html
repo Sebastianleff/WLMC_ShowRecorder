@@ -59,9 +59,6 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Settings</h2>
         <div>
-            <a href="{{ url_for('main.index') }}" class="btn btn-secondary me-2" aria-label="Update App">
-                <i class="bi bi-arrow-repeat"></i> Update App
-            </a>
             {% if config.PAUSE_SHOWS_RECORDING == True %}
                 <form action="{{ url_for('main.resume') }}" method="POST" style="display:inline;">
                     <button type="submit" class="btn btn-secondary" aria-label="Resume Recordings">
