@@ -35,4 +35,4 @@ def update_user_config(updates):
             logger.error(f"Error writing user configuration: {e}")
 
         app.config.update(current_config)
-        logger.info("User configuration updated successfully.")
+        logger.info(f"User configuration updated successfully with {updates}.")

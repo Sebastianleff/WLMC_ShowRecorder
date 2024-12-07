@@ -41,9 +41,9 @@ def pause_shows_until(date):
 
     try:
         scheduler.add_job(
-            update_user_config({"PAUSE_RECORDINGS": False}),
-            'date',
-            run_date=date
+            update_user_config, 'date',
+            run_date=date,
+            args=[{"PAUSE_SHOWS_RECORDING": False, "PAUSE_END_DATE": None}]
         )
         logger.info(f"Recordings resume job added.")
     except Exception as e:

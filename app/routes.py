@@ -274,6 +274,7 @@ def pause():
 		if pause_end_date:
 			pause_end_date = datetime.strptime(pause_end_date, '%Y-%m-%d')
 			pause_shows_until(pause_end_date)
+			update_user_config({"PAUSE_SHOW_END_DATE": pause_end_date.strftime('%Y-%m-%d')})
 
 		update_user_config({"PAUSE_SHOWS_RECORDING": True})
 
@@ -291,7 +292,7 @@ def resume():
 	"""Resume the recordings."""
 
 	try:
-		update_user_config({"PAUSE_SHOWS_RECORDING": False})
+		update_user_config({"PAUSE_SHOWS_RECORDING": False, "PAUSE_SHOW_END_DATE": None})
 		flash("Recordings resumed.", "success")
 		logger.info("Recordings resumed.")
 	except Exception as e:

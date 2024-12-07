@@ -8,7 +8,7 @@ from config import Config
 from .utils import init_utils
 from .logger import init_logger
 from flask_migrate import Migrate
-from .scheduler import init_scheduler
+from .scheduler import init_scheduler, pause_shows_until
 
 config_lock = threading.Lock()
 
@@ -73,6 +73,15 @@ def create_app(config_class=Config):
         init_utils()
     except Exception as e:
         initial_logger.error(f"Error initializing utils: {e}")
+
+    try:
+        if app.config['PAUSE_SHOWS_RECORDING'] is True and app.config['PAUSE_SHOW_END_DATE'] is not None :
+            pause_shows_until(app.config['PAUSE_SHOW_END_DATE'])
+            initial_logger.info(f"Shows paused on startup until {app.config['PAUSE_SHOW_END_DATE']}")
+        else:
+            initial_logger.info("Shows not paused on startup.")
+    except Exception as e:
+        initial_logger.error(f"Error pausing shows on Init: {e}")
     
     from .routes import main_bp
     app.register_blueprint(main_bp)
