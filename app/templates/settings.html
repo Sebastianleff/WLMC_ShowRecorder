@@ -44,7 +44,7 @@
                         <label for="pause_end_date" class="form-label">End Date for Pausing (optional)</label>
                         <input type="date" name="pause_end_date" id="pause_end_date" class="form-control">
                     </div>
-                    <p>Are you sure you want to pause the application?</p>
+                    <p>Are you sure you want to pause recordings?</p>
                 </form>
             </div>
             <div class="modal-footer">
@@ -54,6 +54,7 @@
         </div>
     </div>
 </div>
+
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Settings</h2>
@@ -61,7 +62,7 @@
             <a href="{{ url_for('main.index') }}" class="btn btn-secondary me-2" aria-label="Update App">
                 <i class="bi bi-arrow-repeat"></i> Update App
             </a>
-            {% if config.PAUSE_SHOWS_RECORDING %}
+            {% if config.PAUSE_SHOWS_RECORDING == True %}
                 <form action="{{ url_for('main.resume') }}" method="POST" style="display:inline;">
                     <button type="submit" class="btn btn-secondary" aria-label="Resume Recordings">
                         <i class="bi bi-play-circle"></i> Resume Recordings
@@ -152,9 +153,9 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl)
+        let tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
         });
     });
 

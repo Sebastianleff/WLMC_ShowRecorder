@@ -2,26 +2,27 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, time, timedelta
 from sqlalchemy import inspect
 from flask import current_app
+from .logger import init_logger
 from .models import db, Show
-from threading import Lock
-from config import Config
+from .utils import update_user_config
 import ffmpeg
+import json
 import os
 
-config_lock = Lock()
-os.makedirs(Config.OUTPUT_FOLDER, exist_ok=True)
-
 scheduler = BackgroundScheduler()
-
-#TODO: Add a function to set the pause flag to False
+logger = None
 
 def init_scheduler(app):
     """Initialize and start the scheduler with the Flask app context."""
- 
+
+    global logger
+    logger = init_logger()
+    logger.info("Scheduler logger initialized.")
+
     if not scheduler.running:
         scheduler.start()
         with app.app_context():
-            current_app.logger.info("Scheduler initialized and started.")
+            logger.info("Scheduler initialized and started.")
             refresh_schedule()
 
 def refresh_schedule():
@@ -31,28 +32,33 @@ def refresh_schedule():
             scheduler.remove_all_jobs()
             for show in Show.query.all():
                 schedule_recording(show)
-            current_app.logger.info("Schedule refreshed with latest shows.")
+            logger.info("Schedule refreshed with latest shows.")
     except Exception as e:
-        current_app.logger.error(f"Error refreshing schedule: {e}")
+        logger.error(f"Error refreshing schedule: {e}")
 
 def pause_shows_until(date):
     """Pause all recordings until a specified date."""
- 
+
     try:
         scheduler.add_job(
-            set_pause_flag_false, 'date', #Needs to wait until better user config method is figured out
+            update_user_config({"PAUSE_RECORDINGS": False}),
+            'date',
             run_date=date
         )
-        current_app.logger.info(f"Recordings resume job added.")
+        logger.info(f"Recordings resume job added.")
     except Exception as e:
-        current_app.logger.error(f"Error adding resume jobs: {e}")
+        logger.error(f"Error adding resume jobs: {e}")
 
-def record_stream(stream_url, duration, output_file):
+def record_stream(stream_url, duration, output_file, config_file_path):
     """Records the stream using FFmpeg."""
 
-    if current_app.config['PAUSE_SHOWS_RECORDING'] is True:
-        current_app.logger.info("Recordings paused.")
+
+    with open(config_file_path, 'r') as file:
+        config = json.load(file)
+    if config['PAUSE_SHOWS_RECORDING'] is True:
+        logger.info("Recording paused. Skipping recording.")
         return
+
 
     output_file = f"{output_file}_{datetime.now().strftime('%m-%d-%y')}_RAWDATA.mp3"
     start_time = datetime.now().strftime('%H-%M-%S')
@@ -64,24 +70,24 @@ def record_stream(stream_url, duration, output_file):
             .overwrite_output()
             .run()
         )
-        current_app.logger.info(f"Recording started for {output_file}.")
-        current_app.logger.info(f"Start time:{start_time}.")
+        logger.info(f"Recording started for {output_file}.")
+        logger.info(f"Start time:{start_time}.")
     except ffmpeg.Error as e:
-        current_app.logger.error(f"FFFmpeg error: {e.stderr.decode()}")
+        logger.error(f"FFFmpeg error: {e.stderr.decode()}")
 
 def delete_show(show_id):
     """Delete a show from the database after its last airing."""
- 
+
     try:
         with db.app_context():
             show = Show.query.get(show_id)
             if show:
                 db.session.delete(show)
                 db.session.commit()
-        current_app.logger.info(f"Show with ID {show_id} deleted after last airing.")
+        logger.info(f"Show with ID {show_id} deleted after last airing.")
         refresh_schedule()
     except Exception as e:
-        current_app.logger.error(f"Error deleting show {show_id}: {e}")
+        logger.error(f"Error deleting show {show_id}: {e}")
 
 def schedule_recording(show):
     """Schedules the recurring recording and deletion of a show."""
@@ -103,23 +109,24 @@ def schedule_recording(show):
         show_folder = current_app.config['OUTPUT_FOLDER']
 
     output_file = os.path.join(show_folder, f"{show.host_first_name}_{show.host_last_name}")
+    user_config_path = os.path.join(current_app.instance_path, 'user_config.json')
 
     try:
         scheduler.add_job(
             record_stream, 'cron',
             day_of_week=show.days_of_week, hour=show.start_time.hour, minute=show.start_time.minute,
-            args=[stream_url, duration, output_file],
+            args=[stream_url, duration, output_file, user_config_path],
             start_date=start_time,
             end_date=show.end_date,
         )
-        current_app.logger.info(f"Recording scheduled for show {show.id}.")
+        logger.info(f"Recording scheduled for show {show.id}.")
 
         scheduler.add_job(
             delete_show, 'date',
             run_date=show.end_date + timedelta(days=1),
             args=[show.id]
         )
-        current_app.logger.info(f"Deletion scheduled for show {show.id} after last airing.")
+        logger.info(f"Deletion scheduled for show {show.id} after last airing.")
     except Exception as e:
-        current_app.logger.error(f"Error scheduling recording for show {show.id}: {e}")
+        logger.error(f"Error scheduling recording for show {show.id}: {e}")
 

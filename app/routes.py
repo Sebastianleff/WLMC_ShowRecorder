@@ -1,14 +1,15 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
 from .scheduler import refresh_schedule, pause_shows_until
+from .utils import update_user_config
 from datetime import datetime, time
 from .models import db, Show
 from sqlalchemy import case
 from functools import wraps
-import os
-import threading
+from .logger import init_logger
 
 main_bp = Blueprint('main', __name__)
-config_lock = threading.Lock()
+logger = init_logger()
+logger.info("Routes logger initialized.")
 
 def admin_required(f):
 	"""Decorator to require admin authentication."""
@@ -16,7 +17,7 @@ def admin_required(f):
 	@wraps(f)
 	def decorated_function(*args, **kwargs):
 		if not session.get('authenticated'):
-			current_app.logger.warning("Unauthorized access attempt.")
+			logger.warning("Unauthorized access attempt.")
 			flash("Please log in to access this page.", "danger")
 			return redirect(url_for('main.login'))
 		return f(*args, **kwargs)
@@ -25,10 +26,9 @@ def admin_required(f):
 @main_bp.route('/')
 def index():
 	"""Redirect to the shows page."""
- 
-	current_app.logger.info("Redirecting to shows page.")
-	return redirect(url_for('main.shows'))
 
+	logger.info("Redirecting to shows page.")
+	return redirect(url_for('main.shows'))
 
 # noinspection PyTypeChecker
 @main_bp.route('/shows')
@@ -53,38 +53,38 @@ def shows():
 		Show.start_date
 	).paginate(page=page, per_page=15)
 
-	current_app.logger.info("Rendering shows database page.")
+	logger.info("Rendering shows database page.")
 	return render_template('shows_database.html', shows=shows_column)
 
 @main_bp.route('/login', methods=['GET', 'POST'])
 def login():
 	"""Login route for admin authentication."""
- 
+
 	if request.method == 'POST':
 		username = request.form['username']
 		password = request.form['password']
 		if (username == current_app.config['ADMIN_USERNAME'] and
 				password == current_app.config['ADMIN_PASSWORD']):
 			session['authenticated'] = True
-			current_app.logger.info("Admin logged in successfully.")
+			logger.info("Admin logged in successfully.")
 			flash("You are now logged in.", "success")
 			return redirect(url_for('main.shows'))
 		else:
-			current_app.logger.warning("Invalid login attempt.")
+			logger.warning("Invalid login attempt.")
 			flash("Invalid credentials. Please try again.", "danger")
 	return render_template('login.html')
 
 @main_bp.route('/logout')
 def logout():
 	"""Logout route to clear the session."""
- 
+
 	try:
 		session.pop('authenticated', None)
-		current_app.logger.info("Admin logged out successfully.")
+		logger.info("Admin logged out successfully.")
 		flash("You have successfully logged out.", "success")
-		return redirect(url_for('main.index'))
+		return redirect(url_for('main.login'))  #Change to index if index ever exists as other than redirect
 	except Exception as e:
-		current_app.logger.error(f"Error logging out: {e}")
+		logger.error(f"Error logging out: {e}")
 		flash(f"Error logging out: {e}", "danger")
 		return redirect(url_for('main.shows'))
 
@@ -92,7 +92,7 @@ def logout():
 @admin_required
 def add_show():
 	"""Route to add a new show."""
- 
+
 	try:
 		if request.method == 'POST':
 			start_date = request.form['start_date'] or current_app.config['DEFAULT_START_DATE']
@@ -117,7 +117,7 @@ def add_show():
 				return redirect(url_for('main.add_show'))
 
 			short_day_name = request.form['days_of_week'].lower()[:3]
-			
+
 			show = Show(
 				host_first_name=request.form['host_first_name'],
 				host_last_name=request.form['host_last_name'],
@@ -130,13 +130,14 @@ def add_show():
 			db.session.add(show)
 			db.session.commit()
 			refresh_schedule()
-			current_app.logger.info("Show added successfully.")
+			logger.info("Show added successfully.")
 			flash("Show added successfully!", "success")
 			return redirect(url_for('main.shows'))
-		
+
+		logger.info("Rendering add show page.")
 		return render_template('add_show.html')
 	except Exception as e:
-		current_app.logger.error(f"Error adding show: {e}")
+		logger.error(f"Error adding show: {e}")
 		flash(f"Error adding show: {e}", "danger")
 		return redirect(url_for('main.shows'))
 
@@ -144,12 +145,12 @@ def add_show():
 @admin_required
 def edit_show(id):
 	"""Route to edit an existing show."""
- 
+
 	show = Show.query.get_or_404(id)
 	try:
 		if request.method == 'POST':
 			short_day_name = request.form['days_of_week'].lower()[:3]
-	
+
 			show.host_first_name = request.form['host_first_name']
 			show.host_last_name = request.form['host_last_name']
 			show.start_date = datetime.strptime(request.form['start_date'], '%Y-%m-%d').date()
@@ -157,33 +158,29 @@ def edit_show(id):
 			show.start_time = datetime.strptime(request.form['start_time'].strip(), '%H:%M').time()
 			show.end_time = datetime.strptime(request.form['end_time'].strip(), '%H:%M').time()
 			show.days_of_week = short_day_name
-	
+
 			db.session.commit()
 			refresh_schedule()
-			current_app.logger.info("Show updated successfully.")
+			logger.info("Show updated successfully.")
 			flash("Show updated successfully!", "success")
 
 			return redirect(url_for('main.shows'))
 
+		logger.info(f'Rendering edit show page for show {id}.')
 		return render_template('edit_show.html', show=show)
 	except Exception as e:
-		current_app.logger.error(f"Error editing show: {e}")
+		logger.error(f"Error editing show: {e}")
 		flash(f"Error editing show: {e}", "danger")
 		return redirect(url_for('main.shows'))
 
-#TODO: Implement better way to handle settings and user configuration
-# noinspection PyShadowingNames
 @main_bp.route('/settings', methods=['GET', 'POST'])
 @admin_required
 def settings():
 	"""Route to update the application settings."""
- 
-	config_file = os.path.join(current_app.instance_path, 'user_config.py')
 
 	if request.method == 'POST':
 		try:
-   
-			settings = {
+			updated_settings = {
 				'ADMIN_USERNAME': request.form['admin_username'],
 				'ADMIN_PASSWORD': request.form['admin_password'],
 				'STREAM_URL': request.form['stream_url'],
@@ -193,47 +190,42 @@ def settings():
 				'AUTO_CREATE_SHOW_FOLDERS': 'auto_create_show_folders' in request.form,
 			}
 
-			with open(config_file, 'w') as f:
-				for key, value in settings.items():
-					f.write(f"{key} = {repr(value)}\n")
+			update_user_config(updated_settings)
 
-			with config_lock:
-				current_app.config.from_pyfile(config_file, silent=True)
-
-			current_app.logger.info("Settings updated successfully.")
 			flash("Settings updated successfully!", "success")
 			return redirect(url_for('main.shows'))
-			
+
 		except Exception as e:
-			current_app.logger.error(f"An error occurred while updating settings: {str(e)}")
-			flash(f"An error occurred while updating settings: {str(e)}", "danger")
+			logger.error(f"An error occurred while updating settings: {e}")
+			flash(f"An error occurred while updating settings: {e}", "danger")
 			return redirect(url_for('main.settings'))
 
 	config = current_app.config
 	settings_data = {
-		'admin_username': config.get("ADMIN_USERNAME"),
-		'admin_password': config.get("ADMIN_PASSWORD"),
-		'stream_url': config.get("STREAM_URL"),
-		'output_folder': config.get("OUTPUT_FOLDER"),
-		'default_start_date': config.get("DEFAULT_START_DATE"),
-		'default_end_date': config.get("DEFAULT_END_DATE"),
-		'auto_create_show_folders': config.get("AUTO_CREATE_SHOW_FOLDERS"),
+		'admin_username': config['ADMIN_USERNAME'],
+		'admin_password': config['ADMIN_PASSWORD'],
+		'stream_url': config['STREAM_URL'],
+		'output_folder': config['OUTPUT_FOLDER'],
+		'default_start_date': config['DEFAULT_START_DATE'],
+		'default_end_date': config['DEFAULT_END_DATE'],
+		'auto_create_show_folders': config['AUTO_CREATE_SHOW_FOLDERS'],
 	}
-	
+
+	logger.info(f'Rendering settings page.')
 	return render_template('settings.html', **settings_data)
 
 @main_bp.route('/update_schedule', methods=['POST'])
 @admin_required
 def update_schedule():
 	"""Route to refresh the schedule."""
- 
+
 	try:
 		refresh_schedule()
-		current_app.logger.info("Schedule updated successfully.")
+		logger.info("Schedule updated successfully.")
 		flash("Schedule updated successfully!", "success")
 		return redirect(url_for('main.shows'))
 	except Exception as e:
-		current_app.logger.error(f"Error updating schedule: {e}")
+		logger.error(f"Error updating schedule: {e}")
 		flash(f"Error updating schedule: {e}", "danger")
 		return redirect(url_for('main.shows'))
 
@@ -241,16 +233,17 @@ def update_schedule():
 @admin_required
 def delete_show(id):
 	"""Route to delete a show."""
+
 	try:
 		show = Show.query.get_or_404(id)
 		db.session.delete(show)
 		db.session.commit()
 		refresh_schedule()
-		current_app.logger.info("Show deleted successfully.")
+		logger.info("Show deleted successfully.")
 		flash("Show deleted successfully!", "success")
 		return redirect(url_for('main.shows'))
 	except Exception as e:
-		current_app.logger.error(f"Error deleting show: {e}")
+		logger.error(f"Error deleting show: {e}")
 		flash(f"Error deleting show: {e}", "danger")
 		return redirect(url_for('main.shows'))
 
@@ -258,16 +251,16 @@ def delete_show(id):
 @admin_required
 def clear_all():
 	"""Route to clear all shows."""
- 
+
 	try:
 		db.session.query(Show).delete()
 		db.session.commit()
 		refresh_schedule()
-		current_app.logger.info("All shows have been deleted.")
+		logger.info("All shows have been deleted.")
 		flash("All shows have been deleted.", "info")
 		return redirect(url_for('main.shows'))
 	except Exception as e:
-		current_app.logger.error(f"Error deleting shows: {e}")
+		logger.error(f"Error deleting shows: {e}")
 		flash(f"Error deleting shows: {e}", "danger")
 		return redirect(url_for('main.shows'))
 
@@ -275,42 +268,34 @@ def clear_all():
 @admin_required
 def pause():
 	"""Pause the recordings until the specified end date or indefinitely."""
- 
+
 	try:
 		pause_end_date = request.form.get('pause_end_date')
 		if pause_end_date:
 			pause_end_date = datetime.strptime(pause_end_date, '%Y-%m-%d')
 			pause_shows_until(pause_end_date)
 
-		config_file = os.path.join(current_app.instance_path, 'user_config.py')
-		with open(config_file, 'a') as f:
-			f.write("PAUSE_SHOWS_RECORDING = True\n")
-		with config_lock:
-			current_app.config.from_pyfile(config_file, silent=True)
+		update_user_config({"PAUSE_SHOWS_RECORDING": True})
 
 		flash(f"Recordings paused{' until ' + pause_end_date.strftime('%d-%m-%y') if pause_end_date else ' indefinitely'}.", "warning")
-		current_app.logger.info(f"Recordings paused{' until ' + pause_end_date.strftime('%d-%m-%y') if pause_end_date else ' indefinitely'}.")
+		logger.info(f"Recordings paused{' until ' + pause_end_date.strftime('%d-%m-%y') if pause_end_date else ' indefinitely'}.")
 	except Exception as e:
-		current_app.logger.error(f"Error pausing recordings: {e}")
+		logger.error(f"Error pausing recordings: {e}")
 		flash(f"Error pausing recordings: {e}", "danger")
-  
+
 	return redirect(url_for('main.settings'))
 
 @main_bp.route('/resume', methods=['POST'])
 @admin_required
 def resume():
 	"""Resume the recordings."""
- 
+
 	try:
-		config_file = os.path.join(current_app.instance_path, 'user_config.py')
-		with open(config_file, 'a') as f:
-			f.write("PAUSE_SHOWS_RECORDING = False\n")
-		with config_lock:
-			current_app.config.from_pyfile(config_file, silent=True)
+		update_user_config({"PAUSE_SHOWS_RECORDING": False})
 		flash("Recordings resumed.", "success")
-		current_app.logger.info("Recordings resumed.")
+		logger.info("Recordings resumed.")
 	except Exception as e:
-		current_app.logger.error(f"Error resuming recordings: {e}")
+		logger.error(f"Error resuming recordings: {e}")
 		flash(f"Error resuming recordings: {e}", "danger")
   
 	return redirect(url_for('main.settings'))
