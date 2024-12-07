@@ -52,7 +52,6 @@ def pause_shows_until(date):
 def record_stream(stream_url, duration, output_file, config_file_path):
     """Records the stream using FFmpeg."""
 
-
     with open(config_file_path, 'r') as file:
         config = json.load(file)
     if config['PAUSE_SHOWS_RECORDING'] is True:

@@ -1,7 +1,6 @@
 import os
 import json
 import secrets
-import threading
 from .models import db
 from flask import Flask
 from config import Config
@@ -10,7 +9,7 @@ from .logger import init_logger
 from flask_migrate import Migrate
 from .scheduler import init_scheduler, pause_shows_until
 
-config_lock = threading.Lock()
+
 
 def create_app(config_class=Config):
     app = Flask(__name__)
