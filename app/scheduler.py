@@ -75,7 +75,7 @@ def record_stream(stream_url, duration, output_file, config_file_path):
         logger.error(f"FFFmpeg error: {e.stderr.decode()}")
 
 def delete_show(show_id):
-    """Delete a show from the database after its last airing."""
+    """Delete a show from the database."""
 
     try:
         with db.app_context():
@@ -83,7 +83,7 @@ def delete_show(show_id):
             if show:
                 db.session.delete(show)
                 db.session.commit()
-        logger.info(f"Show with ID {show_id} deleted after last airing.")
+        logger.info(f"Show with ID {show_id} deleted.")
         refresh_schedule()
     except Exception as e:
         logger.error(f"Error deleting show {show_id}: {e}")

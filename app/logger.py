@@ -2,7 +2,6 @@ import logging
 from logging.handlers import RotatingFileHandler
 
 def init_logger(log_file_path=None):
-
     logger = logging.getLogger(name='ShowRecorder')
 
     if not any(isinstance(handler, RotatingFileHandler) for handler in logger.handlers):

@@ -1,15 +1,14 @@
 import os
 import json
 import secrets
-from .models import db
 from flask import Flask
 from config import Config
+from .models import db, Show
 from .utils import init_utils
 from .logger import init_logger
 from flask_migrate import Migrate
+from datetime import datetime, timedelta
 from .scheduler import init_scheduler, pause_shows_until
-
-
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -27,6 +26,7 @@ def create_app(config_class=Config):
     initial_logger = init_logger(log_file_path)
     initial_logger.info("Init logger initialized.")
 
+#Load/Generate secret key and user config
     if not os.path.exists(user_config_path):
         try:
             with open(user_config_path, 'w') as f:
@@ -46,6 +46,7 @@ def create_app(config_class=Config):
         except Exception as e:
             initial_logger.error(f"Error loading user config: {e}")
 
+#Init Database
     try:
         db.init_app(app)
         Migrate(app, db)
@@ -62,17 +63,34 @@ def create_app(config_class=Config):
                     initial_logger.logger.error(f"Error during migrations: {e}")
     except Exception as e:
         initial_logger.error(f"Error initializing the database: {e}")
-        
+
+#Delete past shows
+    try:
+        with app.app_context():
+            past_shows = Show.query.filter(Show.end_date < datetime.now().date()).all()
+            initial_logger.info(f"Past shows: {past_shows}")
+            if not past_shows:
+                initial_logger.info("No past shows to delete on Init.")
+            else:
+                for show in past_shows:
+                    db.session.delete(show)
+                db.session.commit()
+                initial_logger.info(f"{past_shows} shows deleted on Init.")
+    except Exception as e:
+        initial_logger.error(f"Error deleting past shows on Init: {e}")
+
+#Init Scheduler and Utils
     try:
         init_scheduler(app)
     except Exception as e:
-        initial_logger.error(f"Error initilizing scheduler: {e}")
+        initial_logger.error(f"Error initializing scheduler: {e}")
 
     try:
         init_utils()
     except Exception as e:
         initial_logger.error(f"Error initializing utils: {e}")
 
+#Init Show pausing restart roll over
     try:
         if app.config['PAUSE_SHOWS_RECORDING'] is True and app.config['PAUSE_SHOW_END_DATE'] is not None :
             pause_shows_until(app.config['PAUSE_SHOW_END_DATE'])
