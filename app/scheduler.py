@@ -94,7 +94,7 @@ def schedule_recording(show):
     start_time = datetime.combine(show.start_date, show.start_time)
     end_time = datetime.combine(show.start_date, show.end_time)
 
-    if show.end_time == time(0, 0):
+    if show.end_time <= show.start_time:
         end_time += timedelta(days=1)
 
     duration = (end_time - start_time).total_seconds()

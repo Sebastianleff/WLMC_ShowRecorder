@@ -110,11 +110,11 @@ def add_show():
 				flash("End date cannot be in the past!", "danger")
 				return redirect(url_for('main.add_show'))
 
-			if end_time_obj == time(0, 0) and start_time_obj != time(0, 0):
-				pass
-			elif end_time_obj <= start_time_obj:
-				flash("End time cannot be before start time!", "danger")
-				return redirect(url_for('main.add_show'))
+			#if end_time_obj == time(0, 0) and start_time_obj != time(0, 0):
+			#	pass
+			#elif end_time_obj <= start_time_obj:
+			#	flash("End time cannot be before start time!", "danger")
+			#	return redirect(url_for('main.add_show'))
 
 			short_day_name = request.form['days_of_week'].lower()[:3]
 
